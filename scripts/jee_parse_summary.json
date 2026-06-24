@@ -1,0 +1,17 @@
+{
+  "total": 14,
+  "class11": 7,
+  "class12": 7,
+  "topics_11": [
+    "statistics_11",
+    "sets_relations_functions",
+    "trigonometry"
+  ],
+  "topics_12": [
+    "general_maths",
+    "probability",
+    "calculus",
+    "matrices_determinants",
+    "differential_equations"
+  ]
+}

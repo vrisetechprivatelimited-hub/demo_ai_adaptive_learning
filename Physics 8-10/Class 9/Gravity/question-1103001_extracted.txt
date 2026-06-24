@@ -1,0 +1,145 @@
+GRAVITY-02
+Class 09 - Science
+1. How does the force of gravitation between two objects change when the distance between them is reduced to [2]
+half?
+2. The earth and the moon are attracted to each other by gravitational force. Does the earth attract the moon with a [2]
+force that is greater or smaller or the same as the force with which the moon attracts the earth? Why?
+1
+3. Gravitational force on the surface of the moon is only as strong as gravitational force on the earth. What is the [2]
+6
+weight in newtons of a 10 kg object on the moon and on the earth?
+4. If gravitation is the power by which all bodies tend to fall towards each other, then why do all bodies tend [2]
+towards the centre of the earth?
+5. A boy on a cliff 49 m high drops a stone. One second later, he throws a second stone after the first. They both hit [2]
+the ground at the same time. With what speed did he throw the second stone?
+6. What is the magnitude of the gravitational force between the earth and a 1 kg object on its surface? (Mass of the [2]
+× 1024 × 106
+earth is 6 kg and radius of the earth is 6.4 m.)
+7. A stone is dropped from the edge of a roof. It passes a window 2 metre high in 0.1 second. How far is the roof [2]
+above the top of the window?
+8. Why will a sheet of paper fall slower than one that is crumpled into a ball? [2]
+9. What happens to the force between two objects, if [2]
+i. The mass of one object is doubled?
+ii. The distance between the objects is doubled and tripled?
+iii. The masses of both objects are doubled?
+10. What do you mean by acceleration due to gravity? [2]
+[2]
+11. i. Name the SI units of thrust and pressure.
+ii. In which situation, do we exert more pressure on the ground when we stand on one foot or on both feet?
+Justify your answer.
+12. Calculate the average density of the earth in terms of g, G and R. [2]
+13. Give three differences between acceleration due to gravity (g) and universal gravitational constant (G). [2]
+14. What is the importance of universal law of gravitation? [2]
+15. You have a bag of cotton and an iron bar, each indicating a mass of 100 kg when measured on a weighing [2]
+machine. In reality, one is heavier than other. Can you say which one is heavier and why?
+16. How does the force of attraction between the two bodies depend upon their masses and distance between them? [2]
+A student thought that two bricks tied together would fall faster than a single one under the action of gravity. Do
+you agree with his hypothesis or not? Comment.
+17. A firecracker is fired and it rises to a height of 1000 m. Find the [2]
+1 / 4
+QLASS EdTech | 9031-00-3985 | mailus@qlass.in
+i. velocity by which it was released.
+m/s2)
+ii. time taken by it to reach the highest point. (Take, g = 9.8
+18. A ball is thrown vertically upwards with a velocity of 49 m/s. Calculate [2]
+i. the maximum height to which it rises.
+ii. the total time it takes to return to the surface of the earth.
+10m/s2
+g=
+19. A stone is thrown vertically upward with an initial velocity of 40 m/s. Taking , find the maximum [2]
+height reached by the stone. What is the net displacement and the total distance covered by the stone?
+20. A stone is allowed to fall from the top of a tower 100 m high and at the same time another stone is projected [2]
+vertically upwards from the ground with a velocity of 25 m/s. Calculate when and where the two stones will
+meet.
+21. An object is thrown vertically upwards and rises to a height of 10 m. Calculate [2]
+i. the velocity with which the object was thrown upwards and
+ii. the time taken by the object to reach the highest point.
+1/6th
+22. Why is the weight of an object on the moon its weight on the earth? [2]
+23. Suggest a method for calculating the mass of the moon. [2]
+24. What is the source of the centripetal force that a planet requires revolving around the Sun? On what factors does [2]
+that force depend?
+25. If the force of gravity somehow vanished away, why would we be sent flying in space? [2]
+26. Two bodies of masses 3 kg and 12 kg are placed at a distance 12 m. A third body of mass 0.5 kg is to be placed [2]
+at such a point that the force acting on this body is zero. Find the position of that point.
+27. Prove that if the earth attracts two bodies placed at the same distance from the centre of the earth with the same [2]
+force, then their masses are equal.
+28. Write the formula to find the magnitude of the gravitational force between the earth and an object on the surface [2]
+of the earth.
+29. Prove that if a body is thrown vertically upwards then the time of ascent is equal to the time of descent. [2]
+30. Gravitational force acts on all objects in proportion to their masses. Why then, a heavy object does not fall faster [2]
+than a light object?
+31. Why does a block of plastic released under water come up to the surface of water? [2]
+32. Find the percentage change in the weight of a body, when it is taken from the equator to poles. The radius of the [2]
+earth at poles is 6357 km and the radius at the equator is 6378 km.
+33. A stone is released from the top of a tower of height 19.6 m. Calculate its final velocity just before touching the [2]
+ground.
+34. On a certain planet, a small stone tossed up at 15 m/s vertically uploads takes 7.5 s to return to the ground. What [2]
+is the acceleration due to gravity on the planet?
+35. A ball is thrown vertically upwards with a velocity 'u'. Calculate the velocity with which it falls to the earth [2]
+again.
+36. Two objects A and B begin a free fall from rest from the same height 1.00 s apart. How long after A was [2]
+dropped will A and B be 10 m apart?
+ms-1. [2]
+37. A ball is thrown vertically upwards with a velocity of 49 Calculate:i) the maximum height to which it
+rises.ii) the total time it takes to return to the surface of the earth.
+38. State the universal law of gravitation. [2]
+39. A solid weighs 100 gm in air and 88 gm when completely immersed in water. Calculate [2]
+2 / 4
+QLASS EdTech | 9031-00-3985 | mailus@qlass.in
+1. the upthrust
+2. the volume of the solid
+3. the relative density of the solid.
+40. How does a force of gravitation between two objects change when the distance between them is reduced to half? [2]
+41. A bag of sugar weighs W at some place on the equator. If this bag is taken to Antarctica, will it weigh same, [2]
+more or less? Give a reason for your answer.
+42. Gravitational force on the surface of the moon is only 1/6 as strong as gravitational force on the earth. What is [2]
+the weight in newton of a 10 kg object on the moon and on the earth?
+1
+43. Why is the weight of an object on the moon th its weight on the earth? [2]
+6
+44. A stone dropped from the roof of a building takes 4s to reach the ground. Calculate the height of the building. [2]
+45. An object is thrown vertically upwards and rises to a height of 13.07 m. Calculate [2]
+i. the velocity with which the object was thrown upwards.
+ii. the time taken by the object to reach the highest point.
+46. Why is it difficult to hold a school bag having a strap made of a thin and strong string? [2]
+47. When dropped from the same height a body reaches the ground quicker at poles than at the equator. Why? [2]
+48. Calculate the value of acceleration due to gravity g using the relation between g and G. [2]
+49. A ball is dropped from the top of a tower 40 m high. What is its velocity when it has covered a distance of 20 m? [2]
+ms-2)
+We would be its velocity when it hits the ground? (Take g = 10
+ms-2. × 106, [2]
+50. The acceleration due to gravity at the moon's surface is 1.67 If the radius of the moon is 1.74
+calculate the mass of the moon. Use the known value of G.
+51. Mention any five phenomena that the universal law of gravitation was able to explain. [2]
+ms-2. × 106 [2]
+52. On the moon’s surface, the acceleration due to gravity is 1.67 If the radius of the moon is 1.74 m,
+calculate the mass of the moon.
+53. How does the weight of an object vary with respect to the mass and radius of the earth? In a hypothetical case, if [2]
+the diameter of the earth becomes half of its present value and its mass becomes four times of its present value,
+then how would the weight of any object on the surface of the earth be affected?
+54. i. Why does a bucket of water feel heavier when taken out of water? [2]
+ii. Lead has greater density than iron and both are denser than water. Is the buoyant force on a lead object
+greater than, less than or equal to the buoyant force on an iron object of the same volume?
+55. In what sense does the moon fall towards the earth? Why does it not actually fall on the surface of Earth? [2]
+56. On the earth, a stone is thrown from a height in a direction parallel to the earth’s surface while another stone is [2]
+simultaneously dropped from the same height. Which stone would reach the ground first and why?
+[2]
+57. i. Explain, why a completely immersed bottle in water bounces back on the surface?
+ii. Why does a bucket of water weigh less inside the well water?
+58. If the earth attracts an apple, does the apple also attract the earth? If so, why does the earth not move towards the [2]
+apple?
+59. Suppose that the radius of the earth becomes twice of its original radius without any change in its mass. Then [2]
+what will happen to your weight?
+60. A ball is thrown vertically upwards with a velocity of 49 m/s. Calculate [2]
+(i) the maximum height to which it rises,
+(ii) the total time it takes to return to the surface of the earth.
+3 / 4
+QLASS EdTech | 9031-00-3985 | mailus@qlass.in
+61. A ball is thrown up with a speed of 0.5 m/s. [2]
+i. How high will it go before it begins to fall?
+ii. How long will it take to reach that height?
+62. Write the formula to find a magnitude of the gravitational force between the earth and an object on the surface of [2]
+the earth.
+4 / 4
+QLASS EdTech | 9031-00-3985 | mailus@qlass.in

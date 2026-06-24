@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VriseTech</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+/* Header */
+.hdr{background:#1e293b;border-bottom:1px solid #334155;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:800;color:#38bdf8;letter-spacing:-.3px}
+.logo sub{font-size:11px;color:#64748b;font-weight:400;margin-left:6px;letter-spacing:.2px}
+.hdr-right{display:flex;gap:10px;align-items:center}
+#progressText{font-size:12px;color:#94a3b8}
+#stopBtn{display:none;background:#ef444420;color:#f87171;border:1px solid #ef444440;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer}
+#stopBtn:hover{background:#ef444440}
+.pbar{height:3px;background:#1e293b}
+.pbfill{height:100%;background:linear-gradient(90deg,#0ea5e9,#6366f1);transition:width .3s}
+/* Layout */
+.layout{display:grid;grid-template-columns:1fr 320px;min-height:calc(100vh - 56px)}
+.main{padding:28px;overflow-y:auto}
+.side{background:#1e293b;border-left:1px solid #334155;padding:18px;overflow-y:auto}
+/* Setup wizard */
+.wizard{max-width:580px;margin:0 auto}
+.step-indicator{display:flex;gap:0;margin-bottom:28px}
+.step{flex:1;text-align:center;position:relative}
+.step::after{content:'';position:absolute;top:14px;left:50%;right:-50%;height:2px;background:#334155;z-index:0}
+.step:last-child::after{display:none}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid #334155;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#64748b;margin:0 auto 6px;position:relative;z-index:1;transition:all .2s}
+.step.done .step-dot{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.step.active .step-dot{border-color:#0ea5e9;color:#0ea5e9;background:#0ea5e910}
+.step-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.step.active .step-label{color:#38bdf8}
+/* Cards & forms */
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;margin-bottom:16px}
+.card h2{font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:4px}
+.card p{font-size:13px;color:#64748b;margin-bottom:18px}
+.sec-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px}
+/* Mode cards */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.mode-card{border:2px solid #334155;border-radius:10px;padding:20px 16px;cursor:pointer;transition:all .15s;text-align:center}
+.mode-card:hover{border-color:#38bdf8;background:#38bdf808}
+.mode-card.sel{border-color:#0ea5e9;background:#0ea5e912}
+.mode-card .ico{font-size:28px;margin-bottom:8px}
+.mode-card h3{font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:4px}
+.mode-card p{font-size:11px;color:#64748b;line-height:1.5;margin:0}
+/* Subject cards */
+.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.subj-card{border:2px solid #334155;border-radius:10px;padding:20px;cursor:pointer;transition:all .15s;text-align:center}
+.subj-card:hover{border-color:#38bdf8;background:#38bdf808}
+.subj-card.sel{border-color:#6366f1;background:#6366f112}
+.subj-card .ico{font-size:30px;margin-bottom:8px}
+.subj-card h3{font-size:15px;font-weight:700;color:#f1f5f9}
+.subj-card p{font-size:11px;color:#64748b;margin-top:3px}
+/* Chip multi-select */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{border:1.5px solid #334155;border-radius:8px;padding:7px 13px;cursor:pointer;font-size:12px;font-weight:500;color:#94a3b8;transition:all .15s;user-select:none}
+.chip:hover{border-color:#38bdf8;color:#38bdf8}
+.chip.sel{border-color:#0ea5e9;background:#0ea5e915;color:#38bdf8}
+.chip.bloom-1.sel{border-color:#4ade80;background:#4ade8012;color:#4ade80}
+.chip.bloom-2.sel{border-color:#22d3ee;background:#22d3ee12;color:#22d3ee}
+.chip.bloom-3.sel{border-color:#fbbf24;background:#fbbf2412;color:#fbbf24}
+.chip.bloom-4.sel{border-color:#fb923c;background:#fb923c12;color:#fb923c}
+.chip.bloom-5.sel{border-color:#f87171;background:#f8717112;color:#f87171}
+.chip.bloom-6.sel{border-color:#e879f9;background:#e879f912;color:#e879f9}
+/* Number input */
+.num-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.num-input{background:#0f172a;border:1.5px solid #334155;border-radius:8px;padding:8px 12px;color:#f1f5f9;font-size:14px;width:72px;text-align:center}
+.num-input:focus{outline:none;border-color:#0ea5e9}
+.num-hint{font-size:12px;color:#94a3b8}
+/* Buttons */
+.btn{background:#0ea5e9;color:#fff;border:none;border-radius:8px;padding:11px 26px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn:hover{background:#0284c7}
+.btn:disabled{background:#334155;color:#475569;cursor:not-allowed}
+.btn-ghost{background:transparent;color:#94a3b8;border:1px solid #334155;border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;transition:all .15s}
+.btn-ghost:hover{border-color:#94a3b8;color:#f1f5f9}
+.btn-row{display:flex;gap:10px;align-items:center}
+/* Summary box before start */
+.summary-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px 16px;margin-bottom:18px;font-size:13px}
+.summary-box .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e293b}
+.summary-box .row:last-child{border:none}
+.summary-box .lbl{color:#64748b}
+.summary-box .val{color:#f1f5f9;font-weight:600}
+/* Question area */
+.q-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:26px;max-width:640px}
+.q-meta{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.b-subj-m{background:#6366f120;color:#818cf8;border:1px solid #6366f140}
+.b-subj-p{background:#0891b220;color:#22d3ee;border:1px solid #0891b240}
+.b-mode-dpp{background:#7c3aed20;color:#a78bfa;border:1px solid #7c3aed40}
+.b-mode-test{background:#0369a120;color:#38bdf8;border:1px solid #0369a140}
+.b-topic{background:#1d4ed820;color:#60a5fa;border:1px solid #1d4ed840}
+.b-d1{background:#16a34a20;color:#4ade80;border:1px solid #16a34a40}
+.b-d2{background:#0891b220;color:#22d3ee;border:1px solid #0891b240}
+.b-d3{background:#d9770620;color:#fbbf24;border:1px solid #d9770640}
+.b-d4{background:#ea580c20;color:#fb923c;border:1px solid #ea580c40}
+.b-d5{background:#dc262620;color:#f87171;border:1px solid #dc262640}
+.b-d6{background:#7c3aed20;color:#e879f9;border:1px solid #7c3aed40}
+.q-num{font-size:11px;color:#64748b;margin-left:auto}
+.q-text{font-size:16px;line-height:1.7;color:#f1f5f9;margin-bottom:20px;font-weight:500}
+.timer-row{display:flex;justify-content:space-between;margin-bottom:14px;font-size:12px;color:#64748b}
+.timer span{color:#fbbf24;font-weight:700}
+.options{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.opt{background:#0f172a;border:1.5px solid #334155;border-radius:8px;padding:12px 15px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:11px;font-size:14px;color:#e2e8f0}
+.opt:hover:not(.locked){border-color:#0ea5e9;background:#0ea5e910}
+.opt.sel{border-color:#0ea5e9;background:#0ea5e915}
+.opt.correct{border-color:#22c55e;background:#22c55e15;color:#4ade80}
+.opt.wrong{border-color:#ef4444;background:#ef444415;color:#f87171}
+.opt.locked{cursor:default}
+.opt-lbl{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.feedback{border-radius:8px;padding:13px 15px;margin-bottom:14px;font-size:13px;line-height:1.6;display:none}
+.feedback.ok{background:#14532d20;border:1px solid #16a34a40;color:#86efac}
+.feedback.no{background:#7f1d1d20;border:1px solid #ef444440;color:#fca5a5}
+.expl{color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px solid #334155}
+/* Analytics sidebar */
+.side h3{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:10px}
+.big-acc{text-align:center;background:#0f172a;border-radius:10px;padding:12px;margin-bottom:12px}
+.big-acc .num{font-size:38px;font-weight:800;color:#38bdf8;line-height:1}
+.big-acc .lbl{font-size:10px;color:#64748b;margin-top:2px}
+.srow{display:flex;gap:6px;margin-bottom:12px}
+.sbox{flex:1;background:#0f172a;border-radius:8px;padding:9px;text-align:center}
+.sbox .v{font-size:18px;font-weight:700;color:#f1f5f9}
+.sbox .l{font-size:10px;color:#64748b;margin-top:1px}
+.trow{background:#0f172a;border-radius:8px;padding:10px 12px;margin-bottom:7px}
+.tr-top{display:flex;justify-content:space-between;margin-bottom:4px}
+.tr-name{font-size:11px;font-weight:600;text-transform:capitalize;color:#e2e8f0}
+.tr-acc{font-size:11px;font-weight:700}
+.pbar-sm{background:#1e293b;border-radius:3px;height:3px;margin-bottom:4px}
+.pbar-fill{height:100%;border-radius:3px;transition:width .4s}
+.tr-meta{font-size:10px;color:#64748b;display:flex;gap:6px;flex-wrap:wrap}
+.acc-s{color:#4ade80}.acc-w{color:#f87171}.acc-a{color:#fbbf24}
+.tag{display:inline-block;border-radius:4px;font-size:10px;padding:2px 6px;margin:2px}
+.tag-w{background:#ef444420;color:#f87171;border:1px solid #ef444430}
+.tag-s{background:#22c55e20;color:#4ade80;border:1px solid #22c55e30}
+.ssec{margin-bottom:16px}
+/* End screen */
+.end-wrap{max-width:640px;margin:0 auto}
+.end-hdr{text-align:center;margin-bottom:24px}
+.end-hdr h2{font-size:22px;font-weight:800;color:#4ade80;margin-bottom:4px}
+.end-hdr p{font-size:13px;color:#94a3b8}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.rbox{background:#1e293b;border-radius:10px;padding:14px;text-align:center}
+.rbox .rv{font-size:26px;font-weight:800}
+.rbox .rl{font-size:10px;color:#64748b;margin-top:2px}
+.review-item{background:#1e293b;border-radius:8px;padding:12px;margin-bottom:7px;border-left:3px solid #334155}
+.ri-c{border-color:#22c55e}
+.ri-w{border-color:#ef4444}
+.ri-top{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center}
+.ri-q{font-size:13px;color:#f1f5f9;line-height:1.5}
+.ri-ans{font-size:12px;margin-top:5px}
+.ri-expl{font-size:11px;color:#94a3b8;margin-top:4px;padding-top:4px;border-top:1px solid #334155}
+.ri-meta{font-size:10px;color:#64748b;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">VriseTech <sub id="modeLabel"></sub></div>
+  <div class="hdr-right">
+    <span id="progressText"></span>
+    <button id="stopBtn" onclick="stopSession()">⏹ Stop</button>
+  </div>
+</div>
+<div class="pbar"><div class="pbfill" id="pbfill" style="width:0%"></div></div>
+
+<div class="layout">
+  <div class="main" id="main"></div>
+  <div class="side" id="side">
+    <div class="ssec">
+      <h3>Overall Accuracy</h3>
+      <div class="big-acc"><div class="num" id="sAcc">—</div><div class="lbl">accuracy %</div></div>
+      <div class="srow">
+        <div class="sbox"><div class="v" id="sAns">0</div><div class="l">answered</div></div>
+        <div class="sbox"><div class="v" id="sCorr">0</div><div class="l">correct</div></div>
+        <div class="sbox"><div class="v" id="sTime">—</div><div class="l">avg sec</div></div>
+      </div>
+    </div>
+    <div class="ssec">
+      <h3>Topic Breakdown</h3>
+      <div id="sTopics"><p style="color:#475569;font-size:11px">Answer questions to see breakdown</p></div>
+    </div>
+    <div class="ssec" id="sWS" style="display:none">
+      <h3>Weak Areas</h3><div id="sWeak"></div>
+      <h3 style="margin-top:10px">Strong Areas</h3><div id="sStrong"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3001'
+let CFG = { CLASS_TOPICS:{}, DIFFICULTY_LABELS:{} }
+let S = { sessionId:null,cls:null,mode:null,subject:null,answered:false,
+          currentQId:null,startTime:null,timerInterval:null,pendingNext:null }
+
+// wizard state
+let wClass=null, wSubject=null, wMode=null, wTopics=[], wLevels=[], wQPerTopic=10
+
+const BLOOMS_DESC = {
+  1:"Recall facts and basic concepts",
+  2:"Explain ideas or concepts",
+  3:"Use info in new situations",
+  4:"Draw connections, find relationships",
+  5:"Produce new or original work",
+  6:"Justify decisions or courses of action"
+}
+
+async function init() {
+  try {
+    const r = await fetch(`${API}/config`)
+    CFG = await r.json()
+  } catch(e) {
+    console.warn('Could not load config from server — using defaults')
+  }
+  showStep1()
+}
+
+// ══════ STEP 1 — Class ══════
+function showStep1() {
+  wClass=null; wSubject=null; wMode=null; wTopics=[]; wLevels=[]
+  document.getElementById('stopBtn').style.display='none'
+  document.getElementById('progressText').textContent=''
+  document.getElementById('pbfill').style.width='0%'
+  document.getElementById('modeLabel').textContent=''
+  resetSidebar()
+
+  const classes=[
+    {id:'8',  label:'Class 8',  desc:'NCERT · Algebra, Mensuration, Exponents'},
+    {id:'9',  label:'Class 9',  desc:'NCERT · Polynomials, Geometry, Statistics'},
+    {id:'10', label:'Class 10', desc:'NCERT · Quadratics, Trigonometry, AP'},
+    {id:'11', label:'Class 11', desc:'JEE · Complex Numbers, P&C, Conics'},
+    {id:'12', label:'Class 12', desc:'JEE · Calculus, Matrices, Vectors, 3D'},
+  ]
+
+  document.getElementById('main').innerHTML=`
+    <div class="wizard">
+      ${stepIndicator(1)}
+      <div class="card">
+        <h2>Select Class</h2>
+        <p>Choose your class to see the relevant syllabus and questions.</p>
+        <div class="chips" style="gap:10px">
+          ${classes.map(c=>`
+            <div class="chip" id="cls-${c.id}" onclick="selectClass('${c.id}')"
+              style="padding:14px 18px;border-radius:10px;text-align:center;min-width:90px">
+              <div style="font-size:16px;font-weight:800;color:#f1f5f9;margin-bottom:3px">${c.label}</div>
+              <div style="font-size:10px;color:#64748b;line-height:1.4">${c.desc}</div>
+            </div>`).join('')}
+        </div>
+        <div class="btn-row" style="margin-top:20px">
+          <button class="btn" id="s1next" onclick="showStep2()" disabled>Next →</button>
+        </div>
+      </div>
+    </div>`
+}
+
+function selectClass(c) {
+  wClass=c; wSubject=null; wTopics=[]; wLevels=[]
+  document.querySelectorAll('[id^="cls-"]').forEach(el=>el.classList.remove('sel'))
+  document.getElementById(`cls-${c}`).classList.add('sel')
+  document.getElementById('s1next').disabled=false
+}
+
+// ══════ STEP 2 — Subject ══════
+function showStep2() {
+  const availSubjects = Object.keys((CFG.CLASS_TOPICS||{})[wClass]||{})
+  const subjectMeta = {
+    maths:  { ico:'📐', label:'Mathematics' },
+    physics:{ ico:'⚛️',  label:'Physics' }
+  }
+
+  document.getElementById('main').innerHTML=`
+    <div class="wizard">
+      ${stepIndicator(2)}
+      <div class="card">
+        <h2>Choose Subject</h2>
+        <p>Class ${wClass} — select which subject you want to practice.</p>
+        <div class="subj-grid">
+          ${availSubjects.map(s=>`
+            <div class="subj-card" id="sc-${s}" onclick="selectSubject('${s}')">
+              <div class="ico">${subjectMeta[s]?.ico||'📚'}</div>
+              <h3>${subjectMeta[s]?.label||s}</h3>
+            </div>`).join('')}
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="showStep1()">← Back</button>
+          <button class="btn" id="s2next" onclick="showStep3()" disabled>Next →</button>
+        </div>
+      </div>
+    </div>`
+}
+
+function selectSubject(s) {
+  wSubject=s
+  document.querySelectorAll('.subj-card').forEach(el=>el.classList.remove('sel'))
+  document.getElementById(`sc-${s}`).classList.add('sel')
+  document.getElementById('s2next').disabled=false
+}
+
+// ══════ STEP 3 — Mode ══════
+function showStep3() {
+  document.getElementById('main').innerHTML=`
+    <div class="wizard">
+      ${stepIndicator(3)}
+      <div class="card">
+        <h2>Choose Mode</h2>
+        <p>DPP Practice shows the answer after each question. Test mode reveals everything at the end only.</p>
+        <div class="mode-grid">
+          <div class="mode-card" id="mc-dpp" onclick="selectMode('dpp')">
+            <div class="ico">📖</div>
+            <h3>DPP Practice</h3>
+            <p>See correct answer + explanation after each question, then press Next.</p>
+          </div>
+          <div class="mode-card" id="mc-test" onclick="selectMode('test')">
+            <div class="ico">📝</div>
+            <h3>Test</h3>
+            <p>No answers shown during test. Full results + review at the end.</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="showStep2()">← Back</button>
+          <button class="btn" id="s3next" onclick="showStep4()" disabled>Next →</button>
+        </div>
+      </div>
+    </div>`
+}
+
+function selectMode(m) {
+  wMode=m
+  document.querySelectorAll('.mode-card').forEach(el=>el.classList.remove('sel'))
+  document.getElementById(`mc-${m}`).classList.add('sel')
+  document.getElementById('s3next').disabled=false
+}
+
+// ══════ STEP 4 — Topics + Levels + Budget ══════
+function showStep4() {
+  const topics = ((CFG.CLASS_TOPICS||{})[wClass]||{})[wSubject] || []
+  const diffLabels = CFG.DIFFICULTY_LABELS[wSubject] || {}
+
+  const levelsHtml = Object.entries(diffLabels).map(([lvl,lbl])=>`
+    <div class="chip bloom-${lvl}" id="lv-${lvl}" onclick="toggleLevel(${lvl})" title="${BLOOMS_DESC[lvl]||''}">
+      ${lvl}. ${lbl}
+    </div>`).join('')
+
+  const topicsHtml = topics.length
+    ? topics.map(t=>`<div class="chip" id="tc-${t.id}" onclick="toggleTopic('${t.id}')">${t.label}</div>`).join('')
+    : '<p style="color:#f87171;font-size:12px">⚠ Run python3 parse_physics_pdfs.py first to load physics questions.</p>'
+
+  document.getElementById('main').innerHTML=`
+    <div class="wizard">
+      ${stepIndicator(4)}
+      <div class="card">
+        <h2>Select Topics, Difficulty Range & Question Count</h2>
+        <p>The engine starts at the easiest selected level and adapts up or down based on your performance.</p>
+
+        <div class="sec-label">Topics <span style="color:#475569;font-weight:400;text-transform:none;letter-spacing:0">(select one or more — completed one at a time, in this order)</span></div>
+        <div class="chips">${topicsHtml}</div>
+
+        <div class="sec-label" style="margin-top:4px">
+          Difficulty Range
+          ${wSubject==='physics'?'<span style="color:#475569;font-weight:400;text-transform:none;letter-spacing:0"> — Bloom\'s Taxonomy</span>':''}
+        </div>
+        <div class="chips">${levelsHtml}</div>
+
+        <div class="sec-label" style="margin-top:4px">Total questions per topic</div>
+        <div class="num-row">
+          <input class="num-input" type="number" id="qpt" value="10" min="1" max="50"
+            oninput="wQPerTopic=parseInt(this.value)||1;updateSummary()"/>
+          <span class="num-hint" id="totalHint">Select topics & levels to see total</span>
+        </div>
+
+        <div id="summaryBox" style="display:none" class="summary-box"></div>
+
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="showStep3()">← Back</button>
+          <button class="btn" id="s4start" onclick="startSession()" disabled>Start →</button>
+        </div>
+      </div>
+    </div>`
+}
+
+function toggleTopic(id) {
+  const i=wTopics.indexOf(id)
+  if(i===-1) wTopics.push(id); else wTopics.splice(i,1)
+  document.getElementById(`tc-${id}`)?.classList.toggle('sel',wTopics.includes(id))
+  updateSummary()
+}
+
+function toggleLevel(lvl) {
+  const i=wLevels.indexOf(lvl)
+  if(i===-1) wLevels.push(lvl); else wLevels.splice(i,1)
+  document.getElementById(`lv-${lvl}`)?.classList.toggle('sel',wLevels.includes(lvl))
+  updateSummary()
+}
+
+function updateSummary() {
+  const n=parseInt(document.getElementById('qpt')?.value)||1
+  wQPerTopic=n
+  const total=wTopics.length * n
+  const hint=document.getElementById('totalHint')
+  const box=document.getElementById('summaryBox')
+  const btn=document.getElementById('s4start')
+  if(!hint||!box||!btn) return
+
+  if(wTopics.length===0||wLevels.length===0){
+    hint.textContent='Select topics & levels to see total'
+    box.style.display='none'; btn.disabled=true; return
+  }
+
+  hint.textContent=`${wTopics.length} topic${wTopics.length>1?'s':''} × ${n} questions = ${total} total (engine adapts difficulty within your selected range)`
+
+  const topicLabels=(((CFG.CLASS_TOPICS||{})[wClass]||{})[wSubject]||[]).filter(t=>wTopics.includes(t.id)).map(t=>t.label).join(', ')
+  const diffLabels=CFG.DIFFICULTY_LABELS[wSubject]||{}
+  const levelLabels=wLevels.sort((a,b)=>a-b).map(l=>`${l} (${diffLabels[l]})`).join(', ')
+  box.style.display='block'
+  box.innerHTML=`
+    <div class="row"><span class="lbl">Subject</span><span class="val">${wSubject==='maths'?'Mathematics':'Physics'}</span></div>
+    <div class="row"><span class="lbl">Mode</span><span class="val">${wMode==='dpp'?'DPP Practice':'Test'}</span></div>
+    <div class="row"><span class="lbl">Topics (in order)</span><span class="val">${topicLabels}</span></div>
+    <div class="row"><span class="lbl">Difficulty range</span><span class="val">${levelLabels}</span></div>
+    <div class="row"><span class="lbl">Questions per topic</span><span class="val">${n}</span></div>
+    <div class="row"><span class="lbl">Total questions</span><span class="val">${total}</span></div>`
+  btn.disabled=false
+}
+
+// ══════ Step indicator ══════
+function stepIndicator(active) {
+  const steps=[{n:1,l:'Class'},{n:2,l:'Subject'},{n:3,l:'Mode'},{n:4,l:'Setup'}]
+  return `<div class="step-indicator">${steps.map(s=>`
+    <div class="step ${s.n<active?'done':s.n===active?'active':''}">
+      <div class="step-dot">${s.n<active?'✓':s.n}</div>
+      <div class="step-label">${s.l}</div>
+    </div>`).join('')}</div>`
+}
+
+// ══════ SESSION ══════
+async function startSession() {
+  const res=await fetch(`${API}/session/start`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({studentId:'student_1',tenantId:'tenant_001',testId:'poc',
+      cls:wClass,mode:wMode,subject:wSubject,topics:wTopics,
+      levelsSelected:wLevels.sort((a,b)=>a-b),questionsPerTopic:wQPerTopic})
+  })
+  const data=await res.json()
+  if(data.error) return alert('Error: '+data.error)
+
+  S.sessionId=data.sessionId; S.cls=wClass; S.mode=wMode; S.subject=wSubject
+  document.getElementById('modeLabel').textContent=`Class ${wClass} · ${wSubject==='maths'?'Maths':'Physics'} · ${wMode==='dpp'?'DPP':'Test'}`
+  document.getElementById('stopBtn').style.display='block'
+  renderQuestion(data.question)
+  renderAnalytics(data.analytics)
+}
+
+async function stopSession() {
+  if(!S.sessionId||!confirm('Stop session? Your progress will be shown.')) return
+  clearTimer()
+  const r=await fetch(`${API}/session/${S.sessionId}/stop`,{method:'POST'})
+  const d=await r.json()
+  renderEnd(d.finalAnalytics)
+}
+
+// ══════ QUESTION ══════
+const OL=['A','B','C','D']
+const DL_MATHS=['','Easy','Easy-Med','Medium','Hard','Very Hard']
+const DL_PHYS=['','Knowledge','Comprehension','Application','Analysis','Synthesis','Evaluation']
+
+function diffLabel(d,subj) {
+  const maxLvl = subj==='physics' ? 6 : 5
+  const label = subj==='physics' ? DL_PHYS[d] : DL_MATHS[d]
+  return `${d}/${maxLvl} · ${label}`
+}
+function diffBadge(d) { return d<=6&&d>=1?`b-d${d}`:'' }
+
+function targetThresholdMs(level, subject) {
+  const maxLvl = subject==='physics' ? 6 : 5
+  const pct = level / maxLvl
+  if (pct <= 0.4) return 15000
+  if (pct <= 0.7) return 25000
+  return 40000
+}
+
+function renderQuestion(q) {
+  if(!q) return
+  S.answered=false; S.pendingNext=null; S.currentQId=q.id
+  S.startTime=Date.now(); startTimer()
+
+  const pct=Math.round(((q.questionNumber-1)/q.topicBudget)*100)
+  document.getElementById('pbfill').style.width=pct+'%'
+  document.getElementById('progressText').textContent=
+    `Topic ${q.topicIndex}/${q.totalTopics} · Q${q.questionNumber} of ${q.topicBudget}`
+
+  const topicLabel=(((CFG.CLASS_TOPICS||{})[S.cls]||{})[S.subject]||[]).find(t=>t.id===q.topic)?.label||q.topic
+  const targetSec = Math.round(targetThresholdMs(q.difficulty, S.subject)/1000)
+
+  document.getElementById('main').innerHTML=`
+    <div class="q-card">
+      <div class="q-meta">
+        <span class="badge ${S.subject==='maths'?'b-subj-m':'b-subj-p'}">${S.subject==='maths'?'Maths':'Physics'}</span>
+        <span class="badge ${S.mode==='dpp'?'b-mode-dpp':'b-mode-test'}">${S.mode==='dpp'?'DPP':'TEST'}</span>
+        <span class="badge b-topic">${topicLabel}</span>
+        <span class="badge ${diffBadge(q.difficulty)}" id="diffBadge">${diffLabel(q.difficulty,S.subject)}</span>
+        ${q.recycled?'<span class="badge" style="background:#7c3aed20;color:#a78bfa;border:1px solid #7c3aed40">🔁 Repeat</span>':''}
+        <span class="q-num">Q${q.questionNumber} of ${q.topicBudget}</span>
+      </div>
+      <div class="q-text">${q.question}</div>
+      <div class="timer-row">
+        <span class="timer">Time: <span id="timerDisplay">0.0s</span></span>
+        <span style="color:#475569">Answer within ${targetSec}s to level up</span>
+      </div>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`
+          <div class="opt" id="opt${i}" data-val="${esc(o)}" onclick="pickOpt(this,'${esc(o)}')">
+            <span class="opt-lbl">${OL[i]}</span>${o}
+          </div>`).join('')}
+      </div>
+      <div id="fb" class="feedback"></div>
+      <div id="levelHint" style="display:none;font-size:12px;color:#94a3b8;margin-bottom:12px"></div>
+      <div id="actRow" style="display:flex;gap:10px">
+        <button class="btn" id="subBtn" onclick="submitAnswer()" disabled>Submit</button>
+      </div>
+    </div>`
+}
+
+function esc(s){ return s.replace(/'/g,"\\'").replace(/"/g,'&quot;') }
+
+let chosenAns=null
+function pickOpt(el,val) {
+  if(S.answered) return
+  chosenAns=val
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'))
+  el.classList.add('sel')
+  document.getElementById('subBtn').disabled=false
+}
+
+async function submitAnswer() {
+  if(S.answered||!chosenAns) return
+  S.answered=true; clearTimer()
+  const timeMs=Date.now()-S.startTime
+
+  document.querySelectorAll('.opt').forEach(o=>{o.classList.add('locked');o.onclick=null})
+  document.getElementById('subBtn').disabled=true
+
+  const res=await fetch(`${API}/session/${S.sessionId}/answer`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({questionId:S.currentQId,selectedAnswer:chosenAns,timeMs})
+  })
+  const data=await res.json()
+  const r=data.result
+
+  document.querySelectorAll('.opt').forEach(o=>{
+    if(o.dataset.val===r.correctAnswer) o.classList.add('correct')
+    else if(o.dataset.val===chosenAns&&!r.correct) o.classList.add('wrong')
+  })
+
+  renderAnalytics(r.analytics)
+
+  const fb=document.getElementById('fb')
+  fb.style.display='block'
+  if(S.mode==='dpp') {
+    fb.className=`feedback ${r.correct?'ok':'no'}`
+    fb.innerHTML=`<strong>${r.correct?'✓ Correct!':'✗ Wrong'}</strong>
+      <span style="color:#64748b;margin-left:8px">Time: ${(timeMs/1000).toFixed(1)}s</span>
+      ${!r.correct?`<span style="margin-left:8px">Answer: <strong style="color:#4ade80">${r.correctAnswer}</strong></span>`:''}
+      <div class="expl">💡 ${r.explanation}</div>`
+  } else {
+    fb.className=`feedback ${r.correct?'ok':'no'}`
+    fb.innerHTML=`<strong>${r.correct?'✓ Correct':'✗ Incorrect'}</strong>
+      <span style="color:#64748b;margin-left:8px">Time: ${(timeMs/1000).toFixed(1)}s</span>`
+  }
+
+  // Show level-change + speed feedback (visible in both modes)
+  const lh=document.getElementById('levelHint')
+  if(lh){
+    lh.style.display='block'
+    let html=''
+    if(r.levelChange>0) {
+      html=`<span style="color:#4ade80">↑ Fast and correct! Level up — now at ${r.newLevel}/${r.maxLevel}</span>`
+    } else if(r.levelChange<0) {
+      html=`<span style="color:#f87171">↓ Level down. Now at ${r.newLevel}/${r.maxLevel}</span>`
+    } else if(r.speedHint==='slow') {
+      html=`<span style="color:#fbbf24">⏱ Correct, but a bit slow (took longer than ${r.fastThresholdSec}s). Try to answer faster — one more at this level to test your speed.</span>`
+    } else if(r.speedHint===null && !r.correct) {
+      html=`<span style="color:#64748b">→ Staying at level ${r.newLevel}/${r.maxLevel} for now</span>`
+    } else {
+      html=`<span style="color:#64748b">→ Staying at level ${r.newLevel}/${r.maxLevel}</span>`
+    }
+    if(r.wasRecycled) html+=`<div style="color:#a78bfa;margin-top:4px">🔁 Repeat question — your remaining budget is being filled at your highest reached level.</div>`
+    lh.innerHTML=html
+  }
+
+  if(r.needsContinueChoice===false && r.masteryEvent==='top_level_mastered') {
+    // mastery hit but mode is test (no prompt) — just continue silently
+  }
+
+  S.pendingNext={nextQuestion:data.nextQuestion,complete:data.sessionComplete,finalAnalytics:data.finalAnalytics}
+  const ar=document.getElementById('actRow')
+
+  if(data.awaitingDecision) {
+    ar.innerHTML=`
+      <div style="background:#1e293b;border:1px solid #7c3aed40;border-radius:8px;padding:14px;width:100%">
+        <div style="font-size:13px;color:#e2e8f0;margin-bottom:10px">🏆 ${r.masteryEvent==='top_level_mastered'?'You have mastered the hardest level on this topic with strong accuracy!':''} Do you want to continue with more questions, or move to the next topic?</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" onclick="sendDecision('continue')">Continue this topic</button>
+          <button class="btn-ghost" onclick="sendDecision('end')">End topic, move on →</button>
+        </div>
+      </div>`
+  } else if(data.sessionComplete) {
+    ar.innerHTML=`<button class="btn" onclick="showEnd()">View Results →</button>`
+  } else {
+    ar.innerHTML=`<button class="btn" onclick="goNext()">Next question →</button>`
+  }
+  chosenAns=null
+}
+
+async function sendDecision(choice) {
+  const res=await fetch(`${API}/session/${S.sessionId}/decision`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({choice})
+  })
+  const data=await res.json()
+  if(data.sessionComplete){ renderEnd(data.finalAnalytics); return }
+  S.pendingNext={nextQuestion:data.nextQuestion,complete:data.sessionComplete,finalAnalytics:data.finalAnalytics}
+  goNext()
+}
+
+function goNext() { if(S.pendingNext?.nextQuestion) renderQuestion(S.pendingNext.nextQuestion) }
+function showEnd() { renderEnd(S.pendingNext.finalAnalytics) }
+
+// ══════ END SCREEN ══════
+function renderEnd(a) {
+  clearTimer()
+  document.getElementById('stopBtn').style.display='none'
+  document.getElementById('pbfill').style.width='100%'
+  document.getElementById('progressText').textContent='Complete'
+
+  const topicRows=Object.entries(a.topicBreakdown||{}).map(([t,v])=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #334155;font-size:12px">
+      <span style="text-transform:capitalize;color:#e2e8f0">${t}</span>
+      <span>${v.totalCorrect}/${v.totalAnswered} &nbsp;<strong class="${v.status==='strong'?'acc-s':v.status==='weak'?'acc-w':'acc-a'}">${v.accuracy}%</strong></span>
+    </div>`).join('')
+
+  const review=(a.allAnswers||[]).map((ans,i)=>`
+    <div class="review-item ${ans.correct?'ri-c':'ri-w'}">
+      <div class="ri-top">
+        <span class="badge b-topic">${ans.topic}</span>
+        <span class="badge ${diffBadge(ans.difficulty)}">${diffLabel(ans.difficulty,a.subject||S.subject)}</span>
+        <span style="font-size:11px;color:${ans.correct?'#4ade80':'#f87171'};margin-left:auto">${ans.correct?'✓':'✗'} Q${i+1}</span>
+      </div>
+      <div class="ri-q">${ans.question}</div>
+      <div class="ri-ans">Your answer: <strong style="color:${ans.correct?'#4ade80':'#f87171'}">${ans.selectedAnswer}</strong>
+        ${!ans.correct?` · Correct: <strong style="color:#4ade80">${ans.correctAnswer}</strong>`:''}
+      </div>
+      <div class="ri-meta">Time: ${(ans.timeMs/1000).toFixed(1)}s</div>
+      ${a.mode==='dpp'||a.sessionComplete?`<div class="ri-expl">💡 ${ans.explanation}</div>`:''}
+    </div>`).join('')
+
+  document.getElementById('main').innerHTML=`
+    <div class="end-wrap">
+      <div class="end-hdr">
+        <h2>${a.overallAccuracy>=70?'🎉':a.overallAccuracy>=40?'📊':'💪'} Session Complete</h2>
+        <p>${a.totalAnswered} questions · ${a.sessionDurationSec}s · ${a.mode==='dpp'?'DPP Practice':'Test Mode'}</p>
+      </div>
+      <div class="res-grid">
+        <div class="rbox"><div class="rv" style="color:#38bdf8">${a.overallAccuracy}%</div><div class="rl">Accuracy</div></div>
+        <div class="rbox"><div class="rv" style="color:#4ade80">${a.totalCorrect}</div><div class="rl">Correct</div></div>
+        <div class="rbox"><div class="rv" style="color:#f87171">${a.totalAnswered-a.totalCorrect}</div><div class="rl">Wrong</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <h3 style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Topic Summary</h3>
+        ${topicRows}
+        ${a.weakTopics?.length?`<div style="margin-top:10px">${a.weakTopics.map(t=>`<span class="tag tag-w">⚠ ${t}</span>`).join('')}</div>`:''}
+        ${a.strongTopics?.length?`<div style="margin-top:6px">${a.strongTopics.map(t=>`<span class="tag tag-s">★ ${t}</span>`).join('')}</div>`:''}
+      </div>
+      <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Question Review</div>
+      ${review}
+      <div style="margin-top:20px;display:flex;gap:10px">
+        <button class="btn" onclick="resetAll()">Start New Session</button>
+      </div>
+    </div>`
+}
+
+// ══════ ANALYTICS SIDEBAR ══════
+function renderAnalytics(a) {
+  document.getElementById('sAcc').textContent=a.totalAnswered?`${a.overallAccuracy}%`:'—'
+  document.getElementById('sAns').textContent=a.totalAnswered
+  document.getElementById('sCorr').textContent=a.totalCorrect
+  document.getElementById('sTime').textContent=a.avgResponseTimeSec>0?`${a.avgResponseTimeSec}s`:'—'
+
+  const topics=Object.entries(a.topicBreakdown||{})
+  if(!topics.length) return
+  document.getElementById('sTopics').innerHTML=topics.map(([t,v])=>`
+    <div class="trow">
+      <div class="tr-top">
+        <span class="tr-name">${t}</span>
+        <span class="tr-acc ${v.status==='strong'?'acc-s':v.status==='weak'?'acc-w':'acc-a'}">${v.accuracy}%</span>
+      </div>
+      <div class="pbar-sm"><div class="pbar-fill" style="width:${v.accuracy}%;background:${v.status==='strong'?'#22c55e':v.status==='weak'?'#ef4444':'#f59e0b'}"></div></div>
+      <div class="tr-meta"><span>${v.totalCorrect}/${v.totalAnswered}</span>${v.avgTimeSec?`<span>·${v.avgTimeSec}s</span>`:''}</div>
+    </div>`).join('')
+
+  if(a.weakTopics?.length||a.strongTopics?.length) {
+    document.getElementById('sWS').style.display='block'
+    document.getElementById('sWeak').innerHTML=a.weakTopics?.length?a.weakTopics.map(t=>`<span class="tag tag-w">⚠${t}</span>`).join(''):'<span style="color:#475569;font-size:10px">None yet</span>'
+    document.getElementById('sStrong').innerHTML=a.strongTopics?.length?a.strongTopics.map(t=>`<span class="tag tag-s">★${t}</span>`).join(''):'<span style="color:#475569;font-size:10px">None yet</span>'
+  }
+}
+
+function resetSidebar() {
+  document.getElementById('sAcc').textContent='—'
+  document.getElementById('sAns').textContent='0'
+  document.getElementById('sCorr').textContent='0'
+  document.getElementById('sTime').textContent='—'
+  document.getElementById('sTopics').innerHTML='<p style="color:#475569;font-size:11px">Answer questions to see breakdown</p>'
+  document.getElementById('sWS').style.display='none'
+}
+
+// ══════ TIMER ══════
+function startTimer() {
+  clearTimer()
+  S.timerInterval=setInterval(()=>{
+    const el=document.getElementById('timerDisplay')
+    if(el) el.textContent=`${((Date.now()-S.startTime)/1000).toFixed(1)}s`
+  },100)
+}
+function clearTimer() {
+  if(S.timerInterval){ clearInterval(S.timerInterval); S.timerInterval=null }
+}
+
+function resetAll() {
+  S={sessionId:null,cls:null,mode:null,subject:null,answered:false,currentQId:null,startTime:null,timerInterval:null,pendingNext:null}
+  wClass=null; wSubject=null; wMode=null; wTopics=[]; wLevels=[]; wQPerTopic=10
+  showStep1()
+}
+
+init()
+</script>
+</body>
+</html>
