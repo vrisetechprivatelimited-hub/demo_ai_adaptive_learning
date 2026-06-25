@@ -1,16 +1,23 @@
 const { questions } = require('../data/questions')
 
-const LEVEL_DOWN_STREAK = 2
+const LEVEL_DOWN_STREAK = 2   // consecutive wrong answers before level drop
 const MASTERY_THRESHOLD = 0.70
 
-function speedThreshold(level, maxLevel) {
-  const pct = level / maxLevel
-  if (pct <= 0.4) return 15000
-  if (pct <= 0.7) return 25000
-  return 40000
+// Fixed thresholds per difficulty — same regardless of which levels student selected
+const SPEED_THRESHOLDS = {
+  1: 15000,   // Easy:      15s
+  2: 20000,   // Easy-Med:  20s
+  3: 30000,   // Medium:    30s
+  4: 45000,   // Hard:      45s
+  5: 60000,   // Very Hard: 60s
+  6: 60000,   // Physics max level
 }
 
-function createSession(studentId, tenantId, testId, cls, mode, subject, topics, levelsSelected, questionsPerTopic) {
+function speedThreshold(level) {
+  return SPEED_THRESHOLDS[level] || 30000
+}
+
+function createSession(studentId, tenantId, testId, cls, mode, subject, topics, levelsSelected, questionsPerTopic, seenIds = new Set()) {
   const minLevel = Math.min(...levelsSelected)
   const maxLevel = Math.max(...levelsSelected)
 
@@ -18,9 +25,13 @@ function createSession(studentId, tenantId, testId, cls, mode, subject, topics, 
   topics.forEach(topic => {
     topicPools[topic] = {}
     levelsSelected.forEach(level => {
-      topicPools[topic][level] = questions
+      const all = questions
         .filter(q => q.subject === subject && q.class === cls && q.topic === topic && q.difficulty === level)
         .sort(() => Math.random() - 0.5)
+      // Put unseen questions first — student gets fresh content before repeats
+      const fresh = all.filter(q => !seenIds.has(q.id))
+      const seen  = all.filter(q =>  seenIds.has(q.id))
+      topicPools[topic][level] = [...fresh, ...seen]
     })
   })
 
@@ -41,7 +52,8 @@ function createSession(studentId, tenantId, testId, cls, mode, subject, topics, 
     studentId, tenantId, testId, cls, mode, subject, topics, levelsSelected, questionsPerTopic,
     startedAt: Date.now(), totalAnswered: 0, totalCorrect: 0,
     topicPools, topicState, currentTopicIndex: 0,
-    status: 'active', allAnswers: [], pendingDecision: null
+    status: 'active', allAnswers: [], pendingDecision: null,
+    seenIds   // reference to student's historical seen set (for info only, pools already built)
   }
 }
 
@@ -149,7 +161,7 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
   let levelChange = 0
   let speedHint = null
   let masteryEvent = null
-  const threshold = speedThreshold(q.difficulty, state.maxLevel)
+  const threshold = speedThreshold(q.difficulty)
 
   if (correct) {
     state.totalCorrect++
@@ -178,6 +190,10 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
     }
   }
 
+  const streakWarning = (!correct && state.wrongStreak === LEVEL_DOWN_STREAK - 1 && levelChange === 0)
+    ? `One more wrong answer will drop you a level.`
+    : null
+
   // Sanity guard: level must never move by more than 1 step from before this answer
   if (Math.abs(state.currentLevel - levelBefore) > 1) {
     throw new Error(`INTEGRITY BUG: level jumped from ${levelBefore} to ${state.currentLevel} in one answer`)
@@ -186,6 +202,7 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
   state.history.push({ questionId, correct, timeMs, difficulty: q.difficulty, levelAfter: state.currentLevel })
 
   session.allAnswers.push({
+    questionId: q.id,
     questionNumber: session.totalAnswered, topic: q.topic, difficulty: q.difficulty,
     question: q.question, options: q.options, correctAnswer: q.answer,
     selectedAnswer, correct, timeMs, explanation: tieredExplanation(q)
@@ -211,6 +228,7 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
     correct, correctAnswer: q.answer, explanation: tieredExplanation(q),
     levelChange, newLevel: state.currentLevel, maxLevel: state.maxLevel,
     speedHint, fastThresholdSec: Math.round(threshold/1000),
+    streakWarning, wrongStreak: state.wrongStreak,
     masteryEvent, needsContinueChoice,
     topicAccuracy: Math.round(topicAccuracy * 100),
     topicComplete: state.status !== 'active',

@@ -154,6 +154,7 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-heigh
 </style>
 </head>
 <body>
+<div id="welcomeBar" style="display:none;background:#1e293b;padding:6px 20px;font-size:13px;color:#94a3b8;justify-content:flex-end;align-items:center;gap:12px;border-bottom:1px solid #0f172a"></div>
 <div class="hdr">
   <div class="logo">VriseTech <sub id="modeLabel"></sub></div>
   <div class="hdr-right">
@@ -195,6 +196,27 @@ let S = { sessionId:null,cls:null,mode:null,subject:null,answered:false,
 // wizard state
 let wClass=null, wSubject=null, wMode=null, wTopics=[], wLevels=[], wQPerTopic=10
 
+// auth state
+let AUTH = { token: localStorage.getItem('vr_token') || null,
+             user:  JSON.parse(localStorage.getItem('vr_user') || 'null') }
+
+function authHeaders() {
+  return { 'Content-Type':'application/json',
+           ...(AUTH.token ? { 'Authorization': `Bearer ${AUTH.token}` } : {}) }
+}
+
+function setAuth(token, user) {
+  AUTH.token = token; AUTH.user = user
+  localStorage.setItem('vr_token', token)
+  localStorage.setItem('vr_user', JSON.stringify(user))
+}
+
+function clearAuth() {
+  AUTH.token = null; AUTH.user = null
+  localStorage.removeItem('vr_token')
+  localStorage.removeItem('vr_user')
+}
+
 const BLOOMS_DESC = {
   1:"Recall facts and basic concepts",
   2:"Explain ideas or concepts",
@@ -211,7 +233,126 @@ async function init() {
   } catch(e) {
     console.warn('Could not load config from server — using defaults')
   }
-  showStep1()
+  // If token exists, verify it's still valid before showing wizard
+  if (AUTH.token) {
+    try {
+      const r = await fetch(`${API}/auth/me`, { headers: authHeaders() })
+      if (r.ok) {
+        const d = await r.json()
+        AUTH.user = d.user
+        localStorage.setItem('vr_user', JSON.stringify(d.user))
+        showWelcomeBar()
+        showStep1()
+        return
+      }
+    } catch {}
+    clearAuth()
+  }
+  showAuthScreen('signin')
+}
+
+function showWelcomeBar() {
+  const bar = document.getElementById('welcomeBar')
+  if (bar && AUTH.user) {
+    bar.innerHTML = `<span>👋 ${AUTH.user.name}</span><button class="btn-ghost" style="padding:4px 10px;font-size:12px" onclick="logout()">Logout</button>`
+    bar.style.display = 'flex'
+  }
+}
+
+function logout() {
+  clearAuth()
+  resetAll()
+  showAuthScreen('signin')
+}
+
+// ══════ AUTH SCREENS ══════
+function showAuthScreen(tab='signin') {
+  document.getElementById('welcomeBar').style.display = 'none'
+  document.getElementById('main').innerHTML = `
+    <div class="q-card" style="max-width:400px;margin:60px auto">
+      <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #1e293b">
+        <button id="tabSignin" onclick="showAuthScreen('signin')"
+          style="flex:1;padding:10px;background:none;border:none;color:${tab==='signin'?'#6366f1':'#64748b'};
+                 font-weight:${tab==='signin'?700:400};font-size:15px;cursor:pointer;
+                 border-bottom:${tab==='signin'?'2px solid #6366f1':'2px solid transparent'}">
+          Sign In
+        </button>
+        <button id="tabSignup" onclick="showAuthScreen('signup')"
+          style="flex:1;padding:10px;background:none;border:none;color:${tab==='signup'?'#6366f1':'#64748b'};
+                 font-weight:${tab==='signup'?700:400};font-size:15px;cursor:pointer;
+                 border-bottom:${tab==='signup'?'2px solid #6366f1':'2px solid transparent'}">
+          Sign Up
+        </button>
+      </div>
+
+      ${tab==='signup' ? `
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Your Name</label>
+          <input id="authName" type="text" placeholder="e.g. Rahul Sharma"
+            style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
+                   border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box">
+        </div>` : ''}
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Email</label>
+        <input id="authEmail" type="email" placeholder="student@email.com"
+          style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
+                 border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Password</label>
+        <input id="authPass" type="password" placeholder="Min 6 characters"
+          style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
+                 border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter') ${tab==='signin'?'doSignin':'doSignup'}()">
+      </div>
+
+      <div id="authErr" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none"></div>
+
+      <button class="btn" style="width:100%" onclick="${tab==='signin'?'doSignin':'doSignup'}()">
+        ${tab==='signin' ? 'Sign In →' : 'Create Account →'}
+      </button>
+    </div>`
+}
+
+async function doSignin() {
+  const email = document.getElementById('authEmail')?.value?.trim()
+  const pass  = document.getElementById('authPass')?.value
+  if (!email || !pass) return showAuthErr('Please fill in all fields')
+  try {
+    const r = await fetch(`${API}/auth/signin`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: pass })
+    })
+    const d = await r.json()
+    if (!r.ok) return showAuthErr(d.error)
+    setAuth(d.token, d.user)
+    showWelcomeBar()
+    showStep1()
+  } catch { showAuthErr('Could not connect to server') }
+}
+
+async function doSignup() {
+  const name  = document.getElementById('authName')?.value?.trim()
+  const email = document.getElementById('authEmail')?.value?.trim()
+  const pass  = document.getElementById('authPass')?.value
+  if (!name || !email || !pass) return showAuthErr('Please fill in all fields')
+  try {
+    const r = await fetch(`${API}/auth/signup`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, email, password: pass })
+    })
+    const d = await r.json()
+    if (!r.ok) return showAuthErr(d.error)
+    setAuth(d.token, d.user)
+    showWelcomeBar()
+    showStep1()
+  } catch { showAuthErr('Could not connect to server') }
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('authErr')
+  if (el) { el.textContent = msg; el.style.display = 'block' }
 }
 
 // ══════ STEP 1 — Class ══════
@@ -434,8 +575,8 @@ function stepIndicator(active) {
 // ══════ SESSION ══════
 async function startSession() {
   const res=await fetch(`${API}/session/start`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({studentId:'student_1',tenantId:'tenant_001',testId:'poc',
+    method:'POST', headers: authHeaders(),
+    body:JSON.stringify({tenantId:'tenant_001',testId:'poc',
       cls:wClass,mode:wMode,subject:wSubject,topics:wTopics,
       levelsSelected:wLevels.sort((a,b)=>a-b),questionsPerTopic:wQPerTopic})
   })
@@ -452,7 +593,7 @@ async function startSession() {
 async function stopSession() {
   if(!S.sessionId||!confirm('Stop session? Your progress will be shown.')) return
   clearTimer()
-  const r=await fetch(`${API}/session/${S.sessionId}/stop`,{method:'POST'})
+  const r=await fetch(`${API}/session/${S.sessionId}/stop`,{method:'POST',headers:authHeaders()})
   const d=await r.json()
   renderEnd(d.finalAnalytics)
 }
@@ -469,12 +610,9 @@ function diffLabel(d,subj) {
 }
 function diffBadge(d) { return d<=6&&d>=1?`b-d${d}`:'' }
 
-function targetThresholdMs(level, subject) {
-  const maxLvl = subject==='physics' ? 6 : 5
-  const pct = level / maxLvl
-  if (pct <= 0.4) return 15000
-  if (pct <= 0.7) return 25000
-  return 40000
+function targetThresholdMs(level) {
+  const map = {1:15000, 2:20000, 3:30000, 4:45000, 5:60000, 6:60000}
+  return map[level] || 30000
 }
 
 function renderQuestion(q) {
@@ -488,7 +626,7 @@ function renderQuestion(q) {
     `Topic ${q.topicIndex}/${q.totalTopics} · Q${q.questionNumber} of ${q.topicBudget}`
 
   const topicLabel=(((CFG.CLASS_TOPICS||{})[S.cls]||{})[S.subject]||[]).find(t=>t.id===q.topic)?.label||q.topic
-  const targetSec = Math.round(targetThresholdMs(q.difficulty, S.subject)/1000)
+  const targetSec = Math.round(targetThresholdMs(q.difficulty)/1000)
 
   document.getElementById('main').innerHTML=`
     <div class="q-card">
@@ -539,7 +677,7 @@ async function submitAnswer() {
   document.getElementById('subBtn').disabled=true
 
   const res=await fetch(`${API}/session/${S.sessionId}/answer`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
+    method:'POST', headers: authHeaders(),
     body:JSON.stringify({questionId:S.currentQId,selectedAnswer:chosenAns,timeMs})
   })
   const data=await res.json()
@@ -574,7 +712,7 @@ async function submitAnswer() {
     if(r.levelChange>0) {
       html=`<span style="color:#4ade80">↑ Fast and correct! Level up — now at ${r.newLevel}/${r.maxLevel}</span>`
     } else if(r.levelChange<0) {
-      html=`<span style="color:#f87171">↓ Level down. Now at ${r.newLevel}/${r.maxLevel}</span>`
+      html=`<span style="color:#f87171">↓ 2 wrong in a row — Level down. Now at ${r.newLevel}/${r.maxLevel}</span>`
     } else if(r.speedHint==='slow') {
       html=`<span style="color:#fbbf24">⏱ Correct, but a bit slow (took longer than ${r.fastThresholdSec}s). Try to answer faster — one more at this level to test your speed.</span>`
     } else if(r.speedHint===null && !r.correct) {
@@ -582,6 +720,7 @@ async function submitAnswer() {
     } else {
       html=`<span style="color:#64748b">→ Staying at level ${r.newLevel}/${r.maxLevel}</span>`
     }
+    if(r.streakWarning) html+=`<div style="color:#fb923c;margin-top:4px;font-weight:600">⚠️ ${r.streakWarning}</div>`
     if(r.wasRecycled) html+=`<div style="color:#a78bfa;margin-top:4px">🔁 Repeat question — your remaining budget is being filled at your highest reached level.</div>`
     lh.innerHTML=html
   }
@@ -612,7 +751,7 @@ async function submitAnswer() {
 
 async function sendDecision(choice) {
   const res=await fetch(`${API}/session/${S.sessionId}/decision`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
+    method:'POST', headers: authHeaders(),
     body:JSON.stringify({choice})
   })
   const data=await res.json()
@@ -727,7 +866,9 @@ function clearTimer() {
 function resetAll() {
   S={sessionId:null,cls:null,mode:null,subject:null,answered:false,currentQId:null,startTime:null,timerInterval:null,pendingNext:null}
   wClass=null; wSubject=null; wMode=null; wTopics=[]; wLevels=[]; wQPerTopic=10
-  showStep1()
+  // auth is preserved — resetAll only resets the session/wizard, not login
+  if (AUTH.token) { showWelcomeBar(); showStep1() }
+  else showAuthScreen('signin')
 }
 
 init()
