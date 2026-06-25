@@ -11,7 +11,8 @@ const { CLASS_TOPICS, DIFFICULTY_LABELS } = require('./data/questions')
 const { findByEmail, findById, getAll, createUser, verifyPassword,
         updateSubscription, incrementSessionCount, getPlanLimits,
         safeUser, PLANS } = require('./auth/userStore')
-const { getSeenIds, addSeenIds, getStudentStats } = require('./data/progressStore')
+const { getSeenIds, addSeenIds, getStudentStats,
+        addSessionResult, getSessionHistory } = require('./data/progressStore')
 
 const app = express()
 app.use(cors())
@@ -55,62 +56,98 @@ async function parsePdfToQuestions(filePath) {
   const pdfParse = require('pdf-parse')
   const buf  = fs.readFileSync(filePath)
   const data = await pdfParse(buf)
-  const text = data.text
+  const rawText = data.text
+
+  // Strip Devanagari (U+0900-U+097F) and invisible Unicode chars.
+  // CBSE papers are bilingual; pdf-parse extracts Hindi + English both.
+  const devanagariRe = new RegExp('[\\u0900-\\u097F]+', 'g')
+  const invisibleRe  = new RegExp('[\\u200B-\\u200F\\uFEFF]+', 'g')
+  const text = rawText
+    .replace(devanagariRe, ' ')
+    .replace(invisibleRe, '')
+    .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
 
   const questions = []
-  // Split on question numbers (1. or 1) or Q1.)
-  const blocks = text.split(/\n(?=\s*(?:Q\.?\s*)?\d{1,3}[.)]\s)/).filter(b => b.trim().length > 20)
+  const seen = new Set()
 
+  // ── Strategy 1: all 4 options on one line (A) x (B) y (C) z (D) w
+  const inlineRe = /(?:^|\n)\s*(?:Q\.?\s*)?(\d{1,3})[.)]\s+([\s\S]+?)\s+\(A\)\s+([\s\S]+?)\s+\(B\)\s+([\s\S]+?)\s+\(C\)\s+([\s\S]+?)\s+\(D\)\s+([^\n(]+)/gi
+  let m
+  while ((m = inlineRe.exec(text)) !== null) {
+    const qNum = parseInt(m[1])
+    if (seen.has(qNum)) continue
+    seen.add(qNum)
+    const qText = m[2].replace(/\s+/g, ' ').trim()
+    const opts  = [m[3], m[4], m[5], m[6]].map(o => o.replace(/\s+/g, ' ').trim())
+    if (opts.some(o => !o)) continue
+    questions.push(buildQ(qNum, qText, opts))
+  }
+
+  // ── Strategy 2: options on separate lines, including 2-column layouts
+  //   (A) opt1       (B) opt2
+  //   (C) opt3       (D) opt4
+  const optStart  = /^\(?([A-Da-d])[.)]\s/i
+  const twoColRe  = /^\(([A-D])\)\s+(.+?)\s{3,}\(([A-D])\)\s+(.+)/i
+
+  const blocks = text.split(/\n(?=\s*(?:Q\.?\s*)?\d{1,3}[.)]\s)/)
   for (const block of blocks) {
-    const lines = block.trim().split('\n').map(l => l.trim()).filter(Boolean)
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
     if (!lines.length) continue
 
-    // Extract question number + text
     const qMatch = lines[0].match(/^(?:Q\.?\s*)?(\d{1,3})[.)]\s+(.+)/)
     if (!qMatch) continue
-    const qNum  = parseInt(qMatch[1])
-    let   qText = qMatch[2]
+    const qNum = parseInt(qMatch[1])
+    if (seen.has(qNum)) continue
 
-    // Collect continuation lines before first option
+    let qText = qMatch[2]
     let i = 1
-    while (i < lines.length && !lines[i].match(/^\(?[A-D1-4][.)]/i)) {
+
+    while (i < lines.length && !optStart.test(lines[i])) {
+      if (/^(SECTION|section)\s+[A-E]/i.test(lines[i])) break
       qText += ' ' + lines[i]; i++
     }
 
-    // Extract options
     const opts = []
     while (i < lines.length && opts.length < 4) {
-      const oMatch = lines[i].match(/^\(?([A-D1-4])[.)]\s*(.+)/i)
-      if (oMatch) {
-        let optText = oMatch[2]
+      const twoCol = lines[i].match(twoColRe)
+      if (twoCol) {
+        opts.push(twoCol[2].trim(), twoCol[4].trim())
         i++
-        // Continuation of option
-        while (i < lines.length && !lines[i].match(/^\(?[A-D1-4][.)]/i)) {
+        continue
+      }
+      const oMatch = lines[i].match(/^\(?([A-Da-d])[.)]\s*(.+)/i)
+      if (oMatch) {
+        let optText = oMatch[2]; i++
+        while (i < lines.length && !optStart.test(lines[i]) && !twoColRe.test(lines[i])) {
           optText += ' ' + lines[i]; i++
         }
         opts.push(optText.trim())
       } else { i++ }
     }
 
-    if (opts.length < 2) continue   // not enough options
-
-    // Auto-detect difficulty by question length + keyword complexity
-    const difficulty = autoDetectDifficulty(qText)
-
-    questions.push({
-      _parseId: `parse_${Date.now()}_${qNum}`,
-      subject:    'maths',
-      class:      '10',
-      topic:      'general',
-      difficulty,
-      question:   qText.trim(),
-      options:    opts.concat(['', '', '']).slice(0, 4),
-      answer:     opts[0] || '',
-      explanation: '',
-      approved:   false
-    })
+    if (opts.length < 2) continue
+    seen.add(qNum)
+    questions.push(buildQ(qNum, qText.replace(/\s+/g, ' ').trim(), opts))
   }
+
+  questions.sort((a, b) => (a._qNum || 0) - (b._qNum || 0))
   return questions
+
+  function buildQ(qNum, qText, opts) {
+    return {
+      _parseId:    `parse_${Date.now()}_${qNum}`,
+      _qNum:       qNum,
+      subject:     'maths',
+      class:       '10',
+      topic:       'general',
+      difficulty:  autoDetectDifficulty(qText),
+      question:    qText,
+      options:     opts.concat(['', '', '']).slice(0, 4),
+      answer:      opts[0] || '',
+      explanation: '',
+      approved:    false
+    }
+  }
 }
 
 function autoDetectDifficulty(text) {
@@ -321,6 +358,20 @@ app.post('/session/:id/answer', authMiddleware, (req, res) => {
   if (!nextQ) {
     session.status = 'completed'
     addSeenIds(session.studentId, session.subject, session.allAnswers.map(a => a.questionId).filter(Boolean))
+    const analytics = getAllResults(session)
+    addSessionResult(session.studentId, {
+      sessionId:    session.sessionId,
+      completedAt:  new Date().toISOString(),
+      cls:          session.cls,
+      subject:      session.subject,
+      mode:         session.mode,
+      topics:       session.topics,
+      totalAnswered: analytics.totalAnswered,
+      totalCorrect:  analytics.totalCorrect,
+      overallAccuracy: analytics.overallAccuracy,
+      durationSec:  analytics.sessionDurationSec,
+      topicBreakdown: analytics.topicBreakdown
+    })
   }
   res.json({ result, nextQuestion: nextQ, sessionComplete: !nextQ,
              finalAnalytics: !nextQ ? getAllResults(session) : null })
@@ -355,6 +406,21 @@ app.post('/session/:id/stop', authMiddleware, (req, res) => {
 
 app.get('/student/progress', authMiddleware, (req, res) => {
   res.json(getStudentStats(req.user.id))
+})
+
+app.get('/student/history', authMiddleware, (req, res) => {
+  res.json(getSessionHistory(req.user.id))
+})
+
+// GET /admin/students/:id/report — full session history for a student
+app.get('/admin/students/:id/report', authMiddleware, adminOnly, (req, res) => {
+  const user = findById(req.params.id)
+  if (!user) return res.status(404).json({ error: 'Student not found' })
+  res.json({
+    student: safeUser(user),
+    sessions: getSessionHistory(req.params.id),
+    seenStats: getStudentStats(req.params.id)
+  })
 })
 
 // Ensure upload dir exists

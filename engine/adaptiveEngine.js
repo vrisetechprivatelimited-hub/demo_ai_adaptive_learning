@@ -184,7 +184,14 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
           state.currentLevel++
           levelChange = +1
         } else if (!state.masteredEarly) {
-          masteryEvent = 'top_level_mastered'
+          // Require meaningful exposure at max level before declaring mastery:
+          // at least 4 answered + >= 70% accuracy specifically at that level.
+          const topAnswered = state.history.filter(h => h.difficulty === state.maxLevel).length
+          const topCorrect  = state.history.filter(h => h.difficulty === state.maxLevel && h.correct).length
+          if (topAnswered >= 4 && topCorrect / (topAnswered || 1) >= 0.70) {
+            masteryEvent = 'top_level_mastered'
+          }
+          // else: keep practising at maxLevel — mastery not earned yet
         }
       }
     } else {
@@ -197,9 +204,13 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
     state.wrongStreak++
     // Drop level immediately after LEVEL_DOWN_STREAK wrong (now = 1)
     if (state.wrongStreak >= LEVEL_DOWN_STREAK) {
-      if (state.currentLevel > state.minLevel && !state.masteredEarly) {
+      if (state.currentLevel > state.minLevel) {
         state.currentLevel--
         levelChange = -1
+        // If we've fallen below the top level, mastery must be re-earned
+        if (state.currentLevel < state.maxLevel) {
+          state.masteredEarly = false
+        }
       }
       state.wrongStreak = 0
     }

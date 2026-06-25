@@ -18,11 +18,12 @@ const { class10MathsExtra2 } = require('./class10_maths_extra2')
 const { class8MathsExtra3 } = require('./class8_maths_extra3')
 const { class9MathsExtra3 } = require('./class9_maths_extra3')
 const { class10MathsExtra3 } = require('./class10_maths_extra3')
+const { cbseCl10Maths2024 } = require('./cbse_cl10_maths_2024')
 
 const mathsQuestions = [
   ...class8Maths, ...class8MathsExtra, ...class8MathsExtra2, ...class8MathsExtra3,
   ...class9Maths, ...class9MathsExtra, ...class9MathsExtra2, ...class9MathsExtra3,
-  ...class10Maths, ...class10MathsExtra, ...class10MathsExtra2, ...class10MathsExtra3,
+  ...class10Maths, ...class10MathsExtra, ...class10MathsExtra2, ...class10MathsExtra3, ...cbseCl10Maths2024,
   ...trigonometry, ...algebra, ...permutation_combination, ...calculus,
   ...coordinate_geometry, ...probability, ...vectors_3d, ...matrices_determinants
 ]
