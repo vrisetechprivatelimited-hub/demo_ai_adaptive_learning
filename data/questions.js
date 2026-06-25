@@ -1,3 +1,5 @@
+const fs   = require('fs')
+const path = require('path')
 const { mathsQuestions } = require('./maths_questions')
 
 let physicsQuestions = []
@@ -6,7 +8,14 @@ try {
   physicsQuestions = phys.physicsQuestions || []
 } catch(e) { /* physics_questions.js not generated yet */ }
 
-const questions = [...mathsQuestions, ...physicsQuestions]
+// Teacher-approved questions added via admin PDF upload — loaded fresh each call
+function loadCustomQuestions() {
+  const file = path.join(__dirname, 'custom_questions.json')
+  if (!fs.existsSync(file)) return []
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')) } catch { return [] }
+}
+
+const questions = [...mathsQuestions, ...physicsQuestions, ...loadCustomQuestions()]
 
 // Class-aware topic structure — used by frontend and engine
 const CLASS_TOPICS = {

@@ -266,59 +266,117 @@ function logout() {
 }
 
 // ══════ AUTH SCREENS ══════
+// ═══ Subscription plan selected during signup ═══
+let SIGNUP_PLAN = 'free'
+
 function showAuthScreen(tab='signin') {
   document.getElementById('welcomeBar').style.display = 'none'
   document.getElementById('main').innerHTML = `
-    <div class="q-card" style="max-width:400px;margin:60px auto">
-      <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #1e293b">
-        <button id="tabSignin" onclick="showAuthScreen('signin')"
-          style="flex:1;padding:10px;background:none;border:none;color:${tab==='signin'?'#6366f1':'#64748b'};
-                 font-weight:${tab==='signin'?700:400};font-size:15px;cursor:pointer;
-                 border-bottom:${tab==='signin'?'2px solid #6366f1':'2px solid transparent'}">
-          Sign In
-        </button>
-        <button id="tabSignup" onclick="showAuthScreen('signup')"
-          style="flex:1;padding:10px;background:none;border:none;color:${tab==='signup'?'#6366f1':'#64748b'};
-                 font-weight:${tab==='signup'?700:400};font-size:15px;cursor:pointer;
-                 border-bottom:${tab==='signup'?'2px solid #6366f1':'2px solid transparent'}">
-          Sign Up
-        </button>
-      </div>
+    <div style="max-width:${tab==='signup'?'520px':'400px'};margin:40px auto">
+      <div class="q-card">
+        <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #1e293b">
+          <button onclick="showAuthScreen('signin')"
+            style="flex:1;padding:10px;background:none;border:none;cursor:pointer;font-size:15px;
+                   color:${tab==='signin'?'#6366f1':'#64748b'};font-weight:${tab==='signin'?700:400};
+                   border-bottom:${tab==='signin'?'2px solid #6366f1':'2px solid transparent'}">Sign In</button>
+          <button onclick="showAuthScreen('signup')"
+            style="flex:1;padding:10px;background:none;border:none;cursor:pointer;font-size:15px;
+                   color:${tab==='signup'?'#6366f1':'#64748b'};font-weight:${tab==='signup'?700:400};
+                   border-bottom:${tab==='signup'?'2px solid #6366f1':'2px solid transparent'}">Sign Up</button>
+        </div>
 
-      ${tab==='signup' ? `
+        ${tab==='signup' ? `
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Full Name *</label>
+            <input id="authName" type="text" placeholder="e.g. Rahul Sharma" oninput="clearAuthErr()"
+              style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
+                     border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box">
+          </div>` : ''}
+
         <div style="margin-bottom:14px">
-          <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Your Name</label>
-          <input id="authName" type="text" placeholder="e.g. Rahul Sharma"
+          <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Email *</label>
+          <input id="authEmail" type="email" placeholder="student@email.com" oninput="clearAuthErr()"
             style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
                    border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box">
-        </div>` : ''}
+        </div>
 
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Email</label>
-        <input id="authEmail" type="email" placeholder="student@email.com"
-          style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
-                 border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box">
+        ${tab==='signup' ? `
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Mobile Number * <span style="color:#64748b;font-size:11px">(10 digits, Indian number)</span></label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="padding:10px 10px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#64748b;font-size:14px">+91</span>
+              <input id="authMobile" type="tel" placeholder="98765 43210" maxlength="10" oninput="clearAuthErr();this.value=this.value.replace(/\D/g,'')"
+                style="flex:1;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
+                       border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box">
+            </div>
+          </div>` : ''}
+
+        <div style="margin-bottom:${tab==='signup'?'14':'20'}px">
+          <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Password *</label>
+          <input id="authPass" type="password" placeholder="Min 6 characters" oninput="clearAuthErr()"
+            style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
+                   border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter') ${tab==='signin'?'doSignin()':'doSignup()'}">
+        </div>
+
+        ${tab==='signup' ? `
+          <div style="margin-bottom:20px">
+            <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:10px">Choose Plan *</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="planCards">
+              ${['free','basic','premium'].map(p => {
+                const info = {free:{label:'Free',price:'₹0/mo',desc:'2 sessions/day · 10 Q each'},
+                              basic:{label:'Basic',price:'₹199/mo',desc:'5 sessions/day · 30 Q each'},
+                              premium:{label:'Premium',price:'₹499/mo',desc:'Unlimited sessions'}}[p]
+                const sel = p === 'free'
+                return `<div onclick="selectPlan('${p}')" id="planCard_${p}"
+                  style="border:2px solid ${sel?'#6366f1':'#334155'};border-radius:10px;padding:12px 8px;
+                         cursor:pointer;text-align:center;background:${sel?'#1e1b4b':'#0f172a'};transition:all .15s">
+                  <div style="font-weight:700;color:#f1f5f9;font-size:13px">${info.label}</div>
+                  <div style="color:${sel?'#818cf8':'#6366f1'};font-size:16px;font-weight:700;margin:4px 0">${info.price}</div>
+                  <div style="font-size:10px;color:#64748b;line-height:1.4">${info.desc}</div>
+                </div>`}).join('')}
+            </div>
+          </div>` : ''}
+
+        <div id="authErr" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none"></div>
+
+        <button class="btn" style="width:100%" onclick="${tab==='signin'?'doSignin()':'doSignup()'}">
+          ${tab==='signin' ? 'Sign In →' : 'Create Account →'}
+        </button>
       </div>
-      <div style="margin-bottom:20px">
-        <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px">Password</label>
-        <input id="authPass" type="password" placeholder="Min 6 characters"
-          style="width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;
-                 border-radius:8px;color:#f1f5f9;font-size:14px;box-sizing:border-box"
-          onkeydown="if(event.key==='Enter') ${tab==='signin'?'doSignin':'doSignup'}()">
-      </div>
-
-      <div id="authErr" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none"></div>
-
-      <button class="btn" style="width:100%" onclick="${tab==='signin'?'doSignin':'doSignup'}()">
-        ${tab==='signin' ? 'Sign In →' : 'Create Account →'}
-      </button>
     </div>`
+  SIGNUP_PLAN = 'free'
 }
 
+function selectPlan(plan) {
+  SIGNUP_PLAN = plan
+  document.querySelectorAll('[id^="planCard_"]').forEach(el => {
+    const p = el.id.replace('planCard_','')
+    const sel = p === plan
+    el.style.borderColor  = sel ? '#6366f1' : '#334155'
+    el.style.background   = sel ? '#1e1b4b' : '#0f172a'
+  })
+}
+
+function clearAuthErr() {
+  const el = document.getElementById('authErr')
+  if (el) el.style.display = 'none'
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('authErr')
+  if (el) { el.textContent = msg; el.style.display = 'block' }
+}
+
+// ─── client-side validation helpers ───
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) }
+function isValidMobile(m) { return /^[6-9]\d{9}$/.test(m.replace(/\s/g,'')) }
+
 async function doSignin() {
-  const email = document.getElementById('authEmail')?.value?.trim()
+  const email = (document.getElementById('authEmail')?.value||'').trim()
   const pass  = document.getElementById('authPass')?.value
   if (!email || !pass) return showAuthErr('Please fill in all fields')
+  if (!isValidEmail(email)) return showAuthErr('Enter a valid email address')
   try {
     const r = await fetch(`${API}/auth/signin`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -333,14 +391,18 @@ async function doSignin() {
 }
 
 async function doSignup() {
-  const name  = document.getElementById('authName')?.value?.trim()
-  const email = document.getElementById('authEmail')?.value?.trim()
-  const pass  = document.getElementById('authPass')?.value
-  if (!name || !email || !pass) return showAuthErr('Please fill in all fields')
+  const name   = (document.getElementById('authName')?.value||'').trim()
+  const email  = (document.getElementById('authEmail')?.value||'').trim()
+  const mobile = (document.getElementById('authMobile')?.value||'').replace(/\s/g,'')
+  const pass   = document.getElementById('authPass')?.value
+  if (!name)   return showAuthErr('Please enter your name')
+  if (!isValidEmail(email)) return showAuthErr('Enter a valid email address (e.g. rahul@gmail.com)')
+  if (!isValidMobile(mobile)) return showAuthErr('Enter a valid 10-digit Indian mobile number starting with 6-9')
+  if (!pass || pass.length < 6) return showAuthErr('Password must be at least 6 characters')
   try {
     const r = await fetch(`${API}/auth/signup`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ name, email, password: pass })
+      body: JSON.stringify({ name, email, mobile, password: pass, plan: SIGNUP_PLAN })
     })
     const d = await r.json()
     if (!r.ok) return showAuthErr(d.error)
@@ -348,11 +410,6 @@ async function doSignup() {
     showWelcomeBar()
     showStep1()
   } catch { showAuthErr('Could not connect to server') }
-}
-
-function showAuthErr(msg) {
-  const el = document.getElementById('authErr')
-  if (el) { el.textContent = msg; el.style.display = 'block' }
 }
 
 // ══════ STEP 1 — Class ══════
