@@ -1,6 +1,7 @@
 const { questions } = require('../data/questions')
 
-const LEVEL_DOWN_STREAK = 2   // consecutive wrong answers before level drop
+const LEVEL_UP_STREAK   = 2   // consecutive correct+fast answers before level rise
+const LEVEL_DOWN_STREAK = 1   // wrong answers before level drop (immediate)
 const MASTERY_THRESHOLD = 0.70
 
 // Fixed thresholds per difficulty — same regardless of which levels student selected
@@ -43,6 +44,7 @@ function createSession(studentId, tenantId, testId, cls, mode, subject, topics, 
       totalAnswered: 0, totalCorrect: 0,
       questionBudget: questionsPerTopic,
       askedIds: new Set(),
+      lastAnswerCorrect: true,
       history: [], status: 'active', masteredEarly: false
     }
   })
@@ -99,18 +101,22 @@ function getNextQuestion(session) {
       servedLevel = state.currentLevel
     } else {
       // Borrow a question from the nearest level with fresh content.
-      // IMPORTANT: this does NOT change state.currentLevel — that field
-      // is owned exclusively by the streak logic in processAnswer.
-      // Borrowing is a one-off substitution due to content scarcity.
+      // Direction priority depends on student state:
+      //   - Struggling (last wrong or wrongStreak>0): prefer LOWER levels only
+      //   - Doing well: try lower first, then upper
+      // IMPORTANT: this does NOT change state.currentLevel.
+      const struggling = !state.lastAnswerCorrect || state.wrongStreak > 0
       let found = false
       for (let offset = 1; offset <= (state.maxLevel - state.minLevel); offset++) {
         const lower = state.currentLevel - offset
         const upper = state.currentLevel + offset
+        // Always try lower first
         if (lower >= state.minLevel) {
           const alt = (session.topicPools[topic][lower] || []).filter(q => !state.askedIds.has(q.id))
           if (alt.length > 0) { candidates = alt; servedLevel = lower; found = true; break }
         }
-        if (upper <= state.maxLevel) {
+        // Only borrow UP if student is doing well (not struggling)
+        if (!struggling && upper <= state.maxLevel) {
           const alt = (session.topicPools[topic][upper] || []).filter(q => !state.askedIds.has(q.id))
           if (alt.length > 0) { candidates = alt; servedLevel = upper; found = true; break }
         }
@@ -166,21 +172,30 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
   if (correct) {
     state.totalCorrect++
     state.wrongStreak = 0
+    state.lastAnswerCorrect = true
 
     if (timeMs <= threshold) {
       speedHint = 'fast'
-      if (state.currentLevel < state.maxLevel) {
-        state.currentLevel++
-        levelChange = +1
-      } else if (!state.masteredEarly) {
-        masteryEvent = 'top_level_mastered'
+      state.correctStreak++
+      // Level UP only after LEVEL_UP_STREAK consecutive correct+fast answers
+      if (state.correctStreak >= LEVEL_UP_STREAK) {
+        state.correctStreak = 0
+        if (state.currentLevel < state.maxLevel) {
+          state.currentLevel++
+          levelChange = +1
+        } else if (!state.masteredEarly) {
+          masteryEvent = 'top_level_mastered'
+        }
       }
     } else {
       speedHint = 'slow'
-      // correct but slow -> NO level change, repeat at same level
+      state.correctStreak = 0  // slow correct resets the streak — no promotion
     }
   } else {
+    state.lastAnswerCorrect = false
+    state.correctStreak = 0
     state.wrongStreak++
+    // Drop level immediately after LEVEL_DOWN_STREAK wrong (now = 1)
     if (state.wrongStreak >= LEVEL_DOWN_STREAK) {
       if (state.currentLevel > state.minLevel && !state.masteredEarly) {
         state.currentLevel--
@@ -190,9 +205,7 @@ function processAnswer(session, questionId, selectedAnswer, timeMs) {
     }
   }
 
-  const streakWarning = (!correct && state.wrongStreak === LEVEL_DOWN_STREAK - 1 && levelChange === 0)
-    ? `One more wrong answer will drop you a level.`
-    : null
+  const streakWarning = null  // no longer needed since level drops immediately
 
   // Sanity guard: level must never move by more than 1 step from before this answer
   if (Math.abs(state.currentLevel - levelBefore) > 1) {
