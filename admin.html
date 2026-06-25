@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VriseTech Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0f1e;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+.topbar{background:#111827;border-bottom:1px solid #1e293b;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:17px;font-weight:700;color:#818cf8;letter-spacing:.5px}
+.logo span{color:#64748b;font-weight:400;font-size:13px;margin-left:6px}
+.topbar-right{display:flex;align-items:center;gap:16px;font-size:13px;color:#64748b}
+.admin-badge{background:#312e81;color:#a5b4fc;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.btn-ghost{background:none;border:1px solid #334155;color:#94a3b8;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+.btn-ghost:hover{background:#1e293b}
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:200px;background:#111827;border-right:1px solid #1e293b;padding:16px 0;flex-shrink:0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;color:#64748b;cursor:pointer;transition:all .15s}
+.nav-item:hover{background:#1e293b;color:#e2e8f0}
+.nav-item.active{background:#1e1b4b;color:#818cf8;border-right:2px solid #6366f1}
+.nav-item .ic{width:18px;text-align:center;font-size:15px}
+.content{flex:1;overflow-y:auto;padding:28px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:20px;font-weight:700;margin-bottom:20px;color:#f1f5f9}
+/* Cards */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:20px}
+.stat-card .label{font-size:12px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.stat-card .value{font-size:28px;font-weight:700;color:#f1f5f9}
+.stat-card .sub{font-size:12px;color:#94a3b8;margin-top:4px}
+.stat-card.green .value{color:#34d399}
+.stat-card.blue  .value{color:#60a5fa}
+.stat-card.purple .value{color:#a78bfa}
+.stat-card.amber .value{color:#fbbf24}
+/* Table */
+.table-wrap{background:#111827;border:1px solid #1e293b;border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:12px 16px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #1e293b;background:#0f172a;font-weight:600}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid #0f172a;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#0f172a}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-free{background:#1e293b;color:#64748b}
+.badge-basic{background:#1c3d5a;color:#60a5fa}
+.badge-premium{background:#312e81;color:#a5b4fc}
+.badge-green{background:#064e3b;color:#34d399}
+.badge-red{background:#450a0a;color:#f87171}
+.badge-amber{background:#451a03;color:#fbbf24}
+/* PDF Upload */
+.dropzone{border:2px dashed #334155;border-radius:12px;padding:48px;text-align:center;cursor:pointer;transition:all .2s}
+.dropzone:hover,.dropzone.drag{border-color:#6366f1;background:#1e1b4b22}
+.dropzone .ic{font-size:40px;margin-bottom:12px}
+.dropzone p{color:#64748b;font-size:14px}
+.dropzone strong{color:#818cf8}
+/* Review form */
+.q-review-card{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:20px;margin-bottom:16px}
+.q-review-card.approved{border-color:#065f46}
+.q-review-card.rejected{opacity:.4}
+label.fl{font-size:11px;color:#64748b;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+input.fi,textarea.fi,select.fi{background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#f1f5f9;font-size:13px;padding:8px 10px;width:100%}
+textarea.fi{resize:vertical;min-height:72px;font-family:inherit}
+select.fi{cursor:pointer}
+input.fi:focus,textarea.fi:focus,select.fi:focus{outline:none;border-color:#6366f1}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.col{flex:1;min-width:120px}
+.btn{background:#6366f1;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
+.btn:hover{background:#4f46e5}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:6px}
+.btn-green{background:#059669}
+.btn-green:hover{background:#047857}
+.btn-red{background:#dc2626}
+.btn-red:hover{background:#b91c1c}
+.btn-outline{background:none;border:1px solid #6366f1;color:#818cf8}
+.btn-outline:hover{background:#1e1b4b}
+.answer-row{display:flex;gap:8px;align-items:center}
+.answer-opt{padding:6px 12px;border:1.5px solid #334155;border-radius:6px;cursor:pointer;font-size:13px;color:#94a3b8;transition:all .15s}
+.answer-opt.sel{border-color:#34d399;color:#34d399;background:#064e3b22}
+/* Question tree */
+.tree-cls{margin-bottom:12px;border:1px solid #1e293b;border-radius:10px;overflow:hidden}
+.tree-cls-hdr{font-weight:700;color:#818cf8;font-size:14px;padding:12px 16px;background:#0f172a;border-bottom:1px solid #1e293b}
+.tree-subj-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid #0f172a;user-select:none}
+.tree-subj-row:hover{background:#1e293b}
+.tree-subj-row.expanded{background:#1e293b22}
+.tree-subj-label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;text-transform:capitalize}
+.tree-subj-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:#64748b}
+.tree-subj-total{font-weight:700;font-size:13px}
+.tree-chevron{font-size:10px;color:#475569;transition:transform .2s}
+.tree-chevron.open{transform:rotate(90deg)}
+.tree-topics-panel{display:none;background:#060f1e;border-top:1px solid #1e293b}
+.tree-topics-panel.open{display:block}
+.tree-topics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:#1e293b}
+.tree-topic{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:12px;color:#64748b;background:#060f1e;transition:background .1s}
+.tree-topic:hover{background:#0f172a}
+.tree-topic span:first-child{color:#94a3b8;text-transform:capitalize}
+.tree-topic .cnt{font-weight:600;color:#60a5fa;background:#1e3a5f33;padding:2px 8px;border-radius:99px;font-size:11px}
+.tree-topic .cnt.zero{color:#475569;background:transparent}
+.tree-topic:hover{background:#1e293b;color:#e2e8f0}
+.tree-topic .cnt{background:#1e293b;color:#818cf8;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.tree-topic .cnt.zero{background:#1c1917;color:#44403c}
+/* Alert/toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px 20px;font-size:13px;color:#f1f5f9;z-index:999;opacity:0;transition:opacity .3s;max-width:320px}
+.toast.show{opacity:1}
+.toast.ok{border-color:#065f46;background:#064e3b}
+.toast.err{border-color:#450a0a;background:#1c0707}
+/* Login screen */
+#loginWrap{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:200}
+.login-card{background:#111827;border:1px solid #1e293b;border-radius:16px;padding:36px;width:380px}
+.login-card h2{font-size:20px;font-weight:700;margin-bottom:6px;color:#f1f5f9}
+.login-card p{font-size:13px;color:#64748b;margin-bottom:24px}
+/* Toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.search-in{background:#111827;border:1px solid #334155;border-radius:8px;padding:8px 12px;color:#f1f5f9;font-size:13px;width:240px}
+.search-in:focus{outline:none;border-color:#6366f1}
+/* Plan summary cards */
+.plan-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.plan-card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:16px;text-align:center}
+.plan-card .pname{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:4px}
+.plan-card .pcnt{font-size:32px;font-weight:700}
+.plan-card .pprice{font-size:12px;color:#64748b;margin-top:4px}
+#loginWrap.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div id="loginWrap">
+  <div class="login-card">
+    <h2>VriseTech Admin</h2>
+    <p>Sign in with your admin credentials to access the dashboard.</p>
+    <div style="margin-bottom:14px">
+      <label class="fl">Email</label>
+      <input id="lEmail" type="email" class="fi" placeholder="admin@vrisetech.com" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="fl">Password</label>
+      <input id="lPass" type="password" class="fi" placeholder="Password" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <div id="lErr" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none"></div>
+    <button class="btn" style="width:100%" onclick="adminLogin()">Sign In →</button>
+    <p style="margin-top:16px;font-size:12px;text-align:center">
+      <a href="index.html" style="color:#64748b">← Back to Student Portal</a>
+    </p>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="logo">VriseTech <span>Admin Dashboard</span></div>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="topbar-right">
+    <span id="adminNameBadge"></span>
+    <a href="index.html" style="color:#64748b;font-size:12px">← Student Portal</a>
+    <button class="btn-ghost" onclick="adminLogout()">Logout</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-item active" onclick="showPage('overview',this)">
+      <span class="ic">📊</span> Overview
+    </div>
+    <div class="nav-item" onclick="showPage('students',this)">
+      <span class="ic">👥</span> Students
+    </div>
+    <div class="nav-item" onclick="showPage('subscriptions',this)">
+      <span class="ic">💳</span> Subscriptions
+    </div>
+    <div class="nav-item" onclick="showPage('questions',this)">
+      <span class="ic">📚</span> Questions
+    </div>
+    <div class="nav-item" onclick="showPage('upload',this)">
+      <span class="ic">📤</span> Upload PDF
+    </div>
+    <div class="nav-item" onclick="showPage('review',this);loadPending()">
+      <span class="ic">✏️</span> Review Queue
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="page-title">Overview</div>
+      <div class="stats-grid" id="overviewStats">
+        <div class="stat-card"><div class="label">Loading...</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:12px">Subscription Breakdown</div>
+          <div class="plan-summary" id="planSummary"></div>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:12px">Quick Stats</div>
+          <div id="quickStats" style="background:#111827;border:1px solid #1e293b;border-radius:12px;padding:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div class="page" id="page-students">
+      <div class="page-title">Students</div>
+      <div class="toolbar">
+        <input class="search-in" id="studentSearch" placeholder="Search by name or email..." oninput="filterStudents()">
+        <select class="fi" id="planFilter" style="width:140px" onchange="filterStudents()">
+          <option value="">All plans</option>
+          <option value="free">Free</option>
+          <option value="basic">Basic</option>
+          <option value="premium">Premium</option>
+        </select>
+        <span id="studentCount" style="font-size:13px;color:#64748b;margin-left:auto"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Email</th><th>Mobile</th>
+            <th>Plan</th><th>Sessions</th><th>Joined</th>
+            <th>Weak Topics</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="studentsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUBSCRIPTIONS -->
+    <div class="page" id="page-subscriptions">
+      <div class="page-title">Subscriptions</div>
+      <div class="stats-grid" id="subStats"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Student</th><th>Email</th><th>Plan</th>
+            <th>Start Date</th><th>Expiry</th><th>Status</th><th>Change Plan</th>
+          </tr></thead>
+          <tbody id="subTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QUESTIONS -->
+    <div class="page" id="page-questions">
+      <div class="page-title">Question Bank</div>
+      <div id="questionTree" style="columns:2;gap:20px;column-fill:balance"></div>
+    </div>
+
+    <!-- UPLOAD PDF -->
+    <div class="page" id="page-upload">
+      <div class="page-title">Upload Question PDF</div>
+      <p style="color:#64748b;font-size:14px;margin-bottom:20px">
+        Upload a PDF containing MCQ questions. The system will try to parse questions automatically.
+        You can review and correct everything before saving.
+      </p>
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('pdfFile').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <div class="ic">📄</div>
+        <p>Drag & drop a PDF here, or <strong>click to browse</strong></p>
+        <p style="margin-top:6px;font-size:12px">Max 20 MB · PDF only</p>
+      </div>
+      <input type="file" id="pdfFile" accept=".pdf" style="display:none" onchange="uploadPdf(this.files[0])">
+      <div id="uploadStatus" style="margin-top:16px"></div>
+    </div>
+
+    <!-- REVIEW QUEUE -->
+    <div class="page" id="page-review">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div class="page-title" style="margin-bottom:0">Review Queue</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-green" onclick="saveAllApproved()">Save All Approved</button>
+          <button class="btn btn-sm btn-outline" onclick="loadPending()">Refresh</button>
+        </div>
+      </div>
+      <div id="reviewInfo" style="color:#64748b;font-size:13px;margin-bottom:16px"></div>
+      <div id="reviewList"></div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:3001'
+let TOKEN   = localStorage.getItem('vr_admin_token')
+let ADMIN   = JSON.parse(localStorage.getItem('vr_admin_user') || 'null')
+let ALL_STUDENTS = []
+
+// ─── AUTH ───────────────────────────────────────────────
+async function adminLogin() {
+  const email = (document.getElementById('lEmail').value||'').trim()
+  const pass  = document.getElementById('lPass').value
+  if (!email || !pass) return showLErr('Please fill in both fields')
+  try {
+    const r = await fetch(`${API}/auth/signin`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: pass })
+    })
+    const d = await r.json()
+    if (!r.ok) return showLErr(d.error || 'Login failed')
+    if (d.user.role !== 'admin') return showLErr('Access denied — admin accounts only')
+    TOKEN = d.token; ADMIN = d.user
+    localStorage.setItem('vr_admin_token', TOKEN)
+    localStorage.setItem('vr_admin_user', JSON.stringify(ADMIN))
+    document.getElementById('loginWrap').classList.add('hidden')
+    document.getElementById('adminNameBadge').textContent = ADMIN.name
+    loadOverview()
+  } catch { showLErr('Could not connect to server') }
+}
+
+function showLErr(m) {
+  const el = document.getElementById('lErr'); el.textContent = m; el.style.display = 'block'
+}
+
+function adminLogout() {
+  localStorage.removeItem('vr_admin_token'); localStorage.removeItem('vr_admin_user')
+  TOKEN = null; ADMIN = null
+  document.getElementById('loginWrap').classList.remove('hidden')
+}
+
+function ah() { return { 'Content-Type':'application/json', Authorization: `Bearer ${TOKEN}` } }
+
+// ─── NAVIGATION ─────────────────────────────────────────
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('page-' + name).classList.add('active')
+  if (navEl) navEl.classList.add('active')
+  if (name==='overview')      loadOverview()
+  if (name==='students')      loadStudents()
+  if (name==='subscriptions') loadSubscriptions()
+  if (name==='questions')     loadQuestions()
+}
+
+// ─── OVERVIEW ───────────────────────────────────────────
+async function loadOverview() {
+  const r = await fetch(`${API}/admin/stats`, { headers: ah() })
+  if (r.status === 401 || r.status === 403) return adminLogout()
+  const d = await r.json()
+
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="stat-card blue"><div class="label">Total Students</div><div class="value">${d.totalStudents}</div></div>
+    <div class="stat-card purple"><div class="label">Total Questions</div><div class="value">${d.totalQuestions}</div></div>
+    <div class="stat-card green"><div class="label">Est. Revenue</div><div class="value">₹${d.estimatedRevenue.toLocaleString()}</div><div class="sub">this month</div></div>
+    <div class="stat-card amber"><div class="label">Active Sessions</div><div class="value">${d.activeSessions}</div></div>`
+
+  const pb = d.planBreakdown || {}
+  document.getElementById('planSummary').innerHTML = `
+    <div class="plan-card"><div class="pname">Free</div><div class="pcnt" style="color:#64748b">${pb.free||0}</div><div class="pprice">₹0/mo</div></div>
+    <div class="plan-card"><div class="pname">Basic</div><div class="pcnt" style="color:#60a5fa">${pb.basic||0}</div><div class="pprice">₹199/mo</div></div>
+    <div class="plan-card"><div class="pname">Premium</div><div class="pcnt" style="color:#a78bfa">${pb.premium||0}</div><div class="pprice">₹499/mo</div></div>`
+
+  const rawQbc = d.questionsByClass || {}
+
+  // Normalise class keys: "Class 8" → "8", "Class 10" → "10" etc.
+  // This handles stale server cache where physics still had "Class X" format.
+  const qbc = {}
+  for (const [rawKey, subjects] of Object.entries(rawQbc)) {
+    const normKey = rawKey.replace(/^class\s*/i, '').trim()  // "Class 10" → "10", "8" → "8"
+    if (!qbc[normKey]) qbc[normKey] = {}
+    for (const [subj, topics] of Object.entries(subjects)) {
+      if (!qbc[normKey][subj]) qbc[normKey][subj] = {}
+      for (const [topic, count] of Object.entries(topics)) {
+        qbc[normKey][subj][topic] = (qbc[normKey][subj][topic] || 0) + count
+      }
+    }
+  }
+
+  // Sort classes numerically (8, 9, 10, 11, 12)
+  const classes = Object.keys(qbc).sort((a, b) => Number(a) - Number(b))
+  // Collect all subjects across all classes, sorted for consistent column order
+  const subjectOrder = ['maths', 'physics', 'chemistry', 'biology']
+  const allSubjects = subjectOrder.filter(s => classes.some(c => qbc[c][s]))
+  const subjectColors = { maths: '#60a5fa', physics: '#34d399', chemistry: '#f472b6', biology: '#fb923c' }
+
+  let tableHtml = ''
+  if (classes.length) {
+    const subjectHeaders = allSubjects.map(s =>
+      `<th style="text-align:right;color:${subjectColors[s]||'#94a3b8'};text-transform:capitalize;padding:8px 12px">${s.charAt(0).toUpperCase()+s.slice(1)}</th>`
+    ).join('')
+
+    const rows = classes.map((cls, i) => {
+      let rowTotal = 0
+      const cells = allSubjects.map(subj => {
+        const topics = qbc[cls][subj] || {}
+        const count = Object.values(topics).reduce((s, n) => s + n, 0)
+        rowTotal += count
+        return `<td style="text-align:right;padding:8px 12px;color:${count ? (subjectColors[subj]||'#94a3b8') : '#334155'};font-weight:${count?'500':'400'}">${count ? count.toLocaleString() : '—'}</td>`
+      }).join('')
+      const bg = i % 2 === 0 ? 'background:rgba(255,255,255,0.02)' : ''
+      return `<tr style="border-top:1px solid #1e293b;${bg}">
+        <td style="padding:8px 12px;color:#f1f5f9;font-weight:600">Class ${cls}</td>
+        ${cells}
+        <td style="text-align:right;padding:8px 12px;color:#f1f5f9;font-weight:700">${rowTotal.toLocaleString()}</td>
+      </tr>`
+    }).join('')
+
+    const grandTotal = classes.reduce((sum, cls) =>
+      sum + allSubjects.reduce((s2, subj) =>
+        s2 + Object.values(qbc[cls][subj] || {}).reduce((s3, n) => s3 + n, 0), 0), 0)
+
+    const footerCells = allSubjects.map(subj => {
+      const total = classes.reduce((sum, cls) =>
+        sum + Object.values(qbc[cls][subj] || {}).reduce((s, n) => s + n, 0), 0)
+      return `<td style="text-align:right;padding:8px 12px;color:${subjectColors[subj]||'#94a3b8'};font-weight:600">${total ? total.toLocaleString() : '—'}</td>`
+    }).join('')
+
+    tableHtml = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="border-bottom:2px solid #334155">
+          <th style="text-align:left;padding:8px 12px;color:#64748b;font-weight:600">Class</th>
+          ${subjectHeaders}
+          <th style="text-align:right;padding:8px 12px;color:#64748b;font-weight:600">Total</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #334155;background:rgba(167,139,250,0.05)">
+          <td style="padding:8px 12px;color:#a78bfa;font-weight:700;font-size:11px">ALL CLASSES</td>
+          ${footerCells}
+          <td style="text-align:right;padding:8px 12px;color:#a78bfa;font-weight:700">${grandTotal.toLocaleString()}</td>
+        </tr>
+      </tfoot>
+    </table>`
+  } else {
+    tableHtml = '<div style="color:#475569;font-size:13px">No data yet</div>'
+  }
+
+  document.getElementById('quickStats').innerHTML = `
+    <div style="font-size:13px;color:#64748b;margin-bottom:10px">Questions by class</div>
+    ${tableHtml}`
+}
+
+// ─── STUDENTS ───────────────────────────────────────────
+async function loadStudents() {
+  document.getElementById('studentsTbody').innerHTML = '<tr><td colspan="8" style="color:#64748b;text-align:center;padding:24px">Loading...</td></tr>'
+  const r = await fetch(`${API}/admin/students`, { headers: ah() })
+  ALL_STUDENTS = await r.json()
+  renderStudents(ALL_STUDENTS)
+}
+
+function filterStudents() {
+  const q    = document.getElementById('studentSearch').value.toLowerCase()
+  const plan = document.getElementById('planFilter').value
+  const filt = ALL_STUDENTS.filter(s => {
+    const match = s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)
+    const pMatch = !plan || (s.subscription?.plan||'free') === plan
+    return match && pMatch
+  })
+  renderStudents(filt)
+}
+
+function planBadge(plan) {
+  const cls = {free:'badge-free',basic:'badge-basic',premium:'badge-premium'}[plan||'free']||'badge-free'
+  return `<span class="badge ${cls}">${(plan||'free').toUpperCase()}</span>`
+}
+
+function renderStudents(list) {
+  document.getElementById('studentCount').textContent = `${list.length} student${list.length!==1?'s':''}`
+  if (!list.length) {
+    document.getElementById('studentsTbody').innerHTML = '<tr><td colspan="8" style="color:#64748b;text-align:center;padding:24px">No students found</td></tr>'
+    return
+  }
+  document.getElementById('studentsTbody').innerHTML = list.map(s => {
+    const stats = s.progressStats || {}
+    const weakTopics = Object.entries(stats).flatMap(([subj, data]) =>
+      Object.entries(data?.topicAccuracy||{}).filter(([,v]) => v < 50).map(([t]) => t)
+    ).slice(0,3)
+    const joined = new Date(s.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'})
+    const expiry = s.subscription?.expiryDate
+      ? new Date(s.subscription.expiryDate).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})
+      : 'Lifetime'
+    return `<tr>
+      <td style="font-weight:500;color:#f1f5f9">${s.name}</td>
+      <td style="color:#94a3b8">${s.email}</td>
+      <td style="color:#94a3b8">${s.mobile||'—'}</td>
+      <td>${planBadge(s.subscription?.plan)}<br><span style="font-size:10px;color:#475569">exp: ${expiry}</span></td>
+      <td style="color:#94a3b8">${s.sessionCount||0}</td>
+      <td style="color:#64748b;font-size:12px">${joined}</td>
+      <td style="font-size:12px">${weakTopics.length ? weakTopics.map(t=>`<span class="badge badge-red" style="margin:1px">${t}</span>`).join(' ') : '<span style="color:#475569">—</span>'}</td>
+      <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <select onchange="changePlan('${s.id}',this.value)" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">
+          <option value="">Change plan</option>
+          <option value="free">→ Free</option>
+          <option value="basic">→ Basic</option>
+          <option value="premium">→ Premium</option>
+        </select>
+        <button onclick="viewReport('${s.id}')" style="background:#1e3a5f;border:1px solid #3b82f6;color:#60a5fa;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">📊 Report</button>
+      </td>
+    </tr>`
+  }).join('')
+}
+
+async function viewReport(studentId) {
+  const r = await fetch(`${API}/admin/students/${studentId}/report`, { headers: ah() })
+  if (!r.ok) return toast('Failed to load report', 'err')
+  const d = await r.json()
+  const s = d.student
+  const sessions = d.sessions || []
+  const seenStats = d.seenStats || {}
+
+  const seenHtml = Object.entries(seenStats).map(([subj, val]) =>
+    `<span style="background:#1e293b;border-radius:6px;padding:4px 10px;font-size:12px;color:#94a3b8">${subj}: ${val.seenCount} questions seen</span>`
+  ).join(' ')
+
+  const sessionRows = sessions.length ? sessions.map(sess => {
+    const date  = new Date(sess.completedAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})
+    const topics = (sess.topics||[]).join(', ')
+    const topicDetail = Object.entries(sess.topicBreakdown||{}).map(([t,v]) =>
+      `<span style="font-size:10px;color:${v.status==='strong'?'#4ade80':v.status==='weak'?'#f87171':'#fbbf24'}">${t}: ${v.accuracy}%</span>`
+    ).join(' | ')
+    return `<tr>
+      <td style="color:#64748b;font-size:11px">${date}</td>
+      <td style="color:#94a3b8">${sess.cls ? 'Class '+sess.cls : '—'}</td>
+      <td style="color:#94a3b8">${sess.subject||'—'}</td>
+      <td style="color:#94a3b8;font-size:11px">${topics||'—'}</td>
+      <td style="color:#f1f5f9">${sess.totalAnswered||0}</td>
+      <td style="color:${(sess.overallAccuracy||0)>=70?'#4ade80':(sess.overallAccuracy||0)>=40?'#fbbf24':'#f87171'};font-weight:700">${sess.overallAccuracy||0}%</td>
+      <td style="font-size:10px;color:#64748b">${Math.round((sess.durationSec||0)/60)}m ${(sess.durationSec||0)%60}s</td>
+      <td style="font-size:10px">${topicDetail}</td>
+    </tr>`
+  }).join('') : '<tr><td colspan="8" style="color:#475569;text-align:center;padding:20px">No sessions yet</td></tr>'
+
+  document.getElementById('reportModal').innerHTML = `
+    <div style="position:fixed;inset:0;background:#00000090;z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow:auto" onclick="if(event.target===this)this.remove()">
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;width:100%;max-width:900px;padding:24px;margin:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:#f1f5f9">${s.name}</div>
+            <div style="font-size:13px;color:#64748b">${s.email} · ${s.mobile||'—'} · ${sessions.length} DPP sessions total</div>
+          </div>
+          <button onclick="document.getElementById('reportModal').innerHTML=''" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:6px 14px;cursor:pointer">✕ Close</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">${seenHtml||'<span style="color:#475569;font-size:12px">No activity yet</span>'}</div>
+        <div style="overflow:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="background:#1e293b">
+              <th style="padding:8px;text-align:left;color:#64748b">Date</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Class</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Subject</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Topics</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Qs</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Score</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Time</th>
+              <th style="padding:8px;text-align:left;color:#64748b">Breakdown</th>
+            </tr></thead>
+            <tbody>${sessionRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`
+}
+
+async function changePlan(userId, plan) {
+  if (!plan) return
+  const r = await fetch(`${API}/admin/students/${userId}/subscription`, {
+    method:'PUT', headers: ah(), body: JSON.stringify({ plan })
+  })
+  const d = await r.json()
+  if (!r.ok) return toast(d.error, 'err')
+  toast(`Plan updated to ${plan.toUpperCase()}`, 'ok')
+  loadStudents()
+}
+
+// ─── SUBSCRIPTIONS ──────────────────────────────────────
+async function loadSubscriptions() {
+  const r = await fetch(`${API}/admin/students`, { headers: ah() })
+  const students = await r.json()
+  const plans = { free:0, basic:0, premium:0 }
+  students.forEach(s => plans[s.subscription?.plan||'free']++)
+  const revenue = plans.basic*199 + plans.premium*499
+
+  document.getElementById('subStats').innerHTML = `
+    <div class="stat-card"><div class="label">Free Students</div><div class="value" style="color:#64748b">${plans.free}</div></div>
+    <div class="stat-card blue"><div class="label">Basic (₹199/mo)</div><div class="value">${plans.basic}</div><div class="sub">₹${(plans.basic*199).toLocaleString()} MRR</div></div>
+    <div class="stat-card purple"><div class="label">Premium (₹499/mo)</div><div class="value">${plans.premium}</div><div class="sub">₹${(plans.premium*499).toLocaleString()} MRR</div></div>
+    <div class="stat-card green"><div class="label">Total MRR</div><div class="value">₹${revenue.toLocaleString()}</div></div>`
+
+  document.getElementById('subTbody').innerHTML = students.map(s => {
+    const plan = s.subscription?.plan || 'free'
+    const expiry = s.subscription?.expiryDate
+      ? new Date(s.subscription.expiryDate).toLocaleDateString('en-IN')
+      : 'Lifetime'
+    const start = new Date(s.subscription?.startDate||s.createdAt).toLocaleDateString('en-IN')
+    return `<tr>
+      <td style="font-weight:500;color:#f1f5f9">${s.name}</td>
+      <td style="color:#94a3b8;font-size:12px">${s.email}</td>
+      <td>${planBadge(plan)}</td>
+      <td style="font-size:12px;color:#64748b">${start}</td>
+      <td style="font-size:12px;color:#64748b">${expiry}</td>
+      <td><span class="badge badge-green">Active</span></td>
+      <td>
+        <select onchange="changePlan('${s.id}',this.value)" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer">
+          <option value="">Change</option>
+          <option value="free">Free</option>
+          <option value="basic">Basic</option>
+          <option value="premium">Premium</option>
+        </select>
+      </td>
+    </tr>`
+  }).join('')
+}
+
+// ─── QUESTIONS ──────────────────────────────────────────
+const subjColors = { maths:'#60a5fa', physics:'#34d399', chemistry:'#f472b6', biology:'#fb923c' }
+
+function toggleSubject(el) {
+  const panel   = el.nextElementSibling
+  const chevron = el.querySelector('.tree-chevron')
+  const isOpen  = panel.classList.contains('open')
+  panel.classList.toggle('open', !isOpen)
+  chevron.classList.toggle('open', !isOpen)
+  el.classList.toggle('expanded', !isOpen)
+}
+
+async function loadQuestions() {
+  const r = await fetch(`${API}/admin/stats`, { headers: ah() })
+  const d = await r.json()
+  const rawTree = d.questionsByClass || {}
+
+  // Normalise "Class 8" → "8"
+  const tree = {}
+  for (const [k, v] of Object.entries(rawTree)) {
+    const normKey = k.replace(/^class\s*/i, '').trim()
+    if (!tree[normKey]) tree[normKey] = {}
+    for (const [subj, topics] of Object.entries(v)) {
+      if (!tree[normKey][subj]) tree[normKey][subj] = {}
+      for (const [t, n] of Object.entries(topics))
+        tree[normKey][subj][t] = (tree[normKey][subj][t] || 0) + n
+    }
+  }
+
+  const classes = Object.keys(tree).sort((a, b) => Number(a) - Number(b))
+  const subjOrder = ['maths','physics','chemistry','biology']
+
+  let html = ''
+  for (const cls of classes) {
+    const subjects = tree[cls]
+    const clsTotal = Object.values(subjects)
+      .flatMap(t => Object.values(t)).reduce((s, n) => s + n, 0)
+
+    const subjRows = subjOrder
+      .filter(s => subjects[s])
+      .map(subj => {
+        const topics  = subjects[subj]
+        const subjTotal = Object.values(topics).reduce((s, n) => s + n, 0)
+        const topicCount = Object.keys(topics).length
+        const color = subjColors[subj] || '#94a3b8'
+
+        const topicItems = Object.entries(topics)
+          .sort((a, b) => b[1] - a[1])
+          .map(([t, cnt]) => `
+            <div class="tree-topic">
+              <span>${t.replace(/_\d+$/,'').replace(/_/g,' ')}</span>
+              <span class="cnt ${cnt===0?'zero':''}">${cnt}</span>
+            </div>`).join('')
+
+        return `
+          <div class="tree-subj-row" onclick="toggleSubject(this)">
+            <div class="tree-subj-label">
+              <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
+              <span style="color:${color}">${subj.charAt(0).toUpperCase()+subj.slice(1)}</span>
+              <span style="color:#475569;font-weight:400;font-size:11px">${topicCount} topics</span>
+            </div>
+            <div class="tree-subj-meta">
+              <span class="tree-subj-total" style="color:${color}">${subjTotal.toLocaleString()} Q</span>
+              <span class="tree-chevron">▶</span>
+            </div>
+          </div>
+          <div class="tree-topics-panel">
+            <div class="tree-topics-grid">${topicItems}</div>
+          </div>`
+      }).join('')
+
+    html += `
+      <div class="tree-cls">
+        <div class="tree-cls-hdr">
+          Class ${cls}
+          <span style="font-size:11px;color:#475569;font-weight:400;margin-left:10px">${clsTotal.toLocaleString()} total questions</span>
+        </div>
+        ${subjRows}
+      </div>`
+  }
+
+  document.getElementById('questionTree').innerHTML = html || '<div style="color:#475569;padding:20px">No question data yet.</div>'
+}
+
+// ─── PDF UPLOAD ─────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault()
+  document.getElementById('dropzone').classList.remove('drag')
+  const file = e.dataTransfer.files[0]
+  if (file) uploadPdf(file)
+}
+
+async function uploadPdf(file) {
+  if (!file) return
+  if (!file.name.endsWith('.pdf')) return toast('Only PDF files are supported', 'err')
+  const status = document.getElementById('uploadStatus')
+  status.innerHTML = `<div style="color:#818cf8;font-size:14px;padding:16px 0">Uploading and parsing <strong>${file.name}</strong>... please wait.</div>`
+
+  const form = new FormData()
+  form.append('pdf', file)
+  try {
+    const r = await fetch(`${API}/admin/questions/upload`, {
+      method:'POST', headers:{ Authorization: `Bearer ${TOKEN}` }, body: form
+    })
+    const d = await r.json()
+    if (!r.ok) { status.innerHTML = `<div style="color:#f87171;padding:12px;background:#450a0a;border-radius:8px">Error: ${d.error}</div>`; return }
+    status.innerHTML = `<div style="color:#34d399;padding:12px;background:#064e3b;border-radius:8px;margin-bottom:8px">
+      Parsed <strong>${d.count}</strong> questions from ${file.name}.
+    </div>
+    <button class="btn btn-sm" onclick="showPage('review',document.querySelector('.nav-item:nth-child(6)'));loadPending()">
+      Go to Review Queue →
+    </button>`
+    toast(`${d.count} questions parsed — review before saving`, 'ok')
+  } catch(e) {
+    status.innerHTML = `<div style="color:#f87171;padding:12px;background:#450a0a;border-radius:8px">Upload failed: ${e.message}</div>`
+  }
+}
+
+// ─── REVIEW QUEUE ────────────────────────────────────────
+let PENDING = []
+
+const CLASS_OPTIONS = ['8','9','10','11','12']
+const SUBJ_OPTIONS  = ['maths','physics','chemistry','biology']
+const DIFF_OPTIONS  = [{v:1,l:'Easy'},{v:2,l:'Easy-Med'},{v:3,l:'Medium'},{v:4,l:'Hard'},{v:5,l:'Very Hard'}]
+
+async function loadPending() {
+  document.getElementById('reviewList').innerHTML = '<div style="color:#64748b;font-size:14px;padding:20px 0">Loading...</div>'
+  const r = await fetch(`${API}/admin/questions/pending`, { headers: ah() })
+  PENDING = await r.json()
+  document.getElementById('reviewInfo').textContent =
+    PENDING.length ? `${PENDING.length} question${PENDING.length!==1?'s':''} waiting for review.` : 'Queue is empty.'
+  renderPending()
+}
+
+function renderPending() {
+  if (!PENDING.length) {
+    document.getElementById('reviewList').innerHTML = `<div style="text-align:center;padding:48px;color:#475569">
+      <div style="font-size:36px;margin-bottom:12px">✅</div>
+      <div>No questions pending review.</div>
+      <div style="margin-top:8px;font-size:12px">Upload a PDF to add questions to the queue.</div>
+    </div>`
+    return
+  }
+  document.getElementById('reviewList').innerHTML = PENDING.map((q, i) => renderQCard(q, i)).join('')
+}
+
+function renderQCard(q, i) {
+  const pid = q._pendingId || `_${i}`
+  const diffOpts = DIFF_OPTIONS.map(d =>
+    `<option value="${d.v}" ${q.difficulty==d.v?'selected':''}>${d.l}</option>`).join('')
+  const clsOpts = CLASS_OPTIONS.map(c =>
+    `<option value="${c}" ${q.class==c?'selected':''}>${c}</option>`).join('')
+  const subjOpts = SUBJ_OPTIONS.map(s =>
+    `<option value="${s}" ${q.subject==s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')
+  const ansOpts = (q.options||[]).map((o,idx) => {
+    if (!o) return ''
+    const letters = ['A','B','C','D']
+    const isSel = o && q.answer === o
+    return `<span class="answer-opt ${isSel?'sel':''}" onclick="selectAnswer('${pid}',${idx})" id="ao_${pid}_${idx}">${letters[idx]}: ${o.slice(0,40)}</span>`
+  }).join('')
+
+  return `<div class="q-review-card" id="qcard_${pid}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">
+        Q${i+1} · Auto-detected: Class ${q.class} · ${q.subject} · Difficulty ${q.difficulty}
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-green" onclick="approveCard('${pid}')">✓ Approve</button>
+        <button class="btn btn-sm btn-red btn-outline" style="background:none;border-color:#991b1b;color:#f87171" onclick="rejectCard('${pid}')">✗ Reject</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label class="fl">Question Text</label>
+      <textarea class="fi" id="qt_${pid}" rows="3">${q.question||''}</textarea>
+    </div>
+
+    <div class="opt-grid" style="margin-bottom:12px">
+      ${['A','B','C','D'].map((l,idx) => `
+        <div>
+          <label class="fl">Option ${l}</label>
+          <input class="fi" id="opt_${pid}_${idx}" value="${(q.options||[])[idx]||''}" oninput="refreshAnswerOpts('${pid}')">
+        </div>`).join('')}
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label class="fl">Correct Answer (click to select)</label>
+      <div class="answer-row" id="ansRow_${pid}">${ansOpts}</div>
+    </div>
+
+    <div class="row" style="margin-bottom:12px">
+      <div class="col">
+        <label class="fl">Class</label>
+        <select class="fi" id="cls_${pid}">${clsOpts}</select>
+      </div>
+      <div class="col">
+        <label class="fl">Subject</label>
+        <select class="fi" id="subj_${pid}">${subjOpts}</select>
+      </div>
+      <div class="col">
+        <label class="fl">Topic ID</label>
+        <input class="fi" id="topic_${pid}" value="${q.topic||'general'}" placeholder="e.g. algebra_11">
+      </div>
+      <div class="col">
+        <label class="fl">Difficulty</label>
+        <select class="fi" id="diff_${pid}">${diffOpts}</select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:6px">
+      <label class="fl">Explanation (optional)</label>
+      <textarea class="fi" id="exp_${pid}" rows="2">${q.explanation||''}</textarea>
+    </div>
+
+    <div id="status_${pid}" style="font-size:12px;margin-top:8px"></div>
+  </div>`
+}
+
+function selectAnswer(pid, idx) {
+  const optEl = document.getElementById(`opt_${pid}_${idx}`)
+  const val   = optEl?.value?.trim()
+  if (!val) return
+  // Update visual
+  document.querySelectorAll(`[id^="ao_${pid}_"]`).forEach(el => el.classList.remove('sel'))
+  const selEl = document.getElementById(`ao_${pid}_${idx}`)
+  if (selEl) selEl.classList.add('sel')
+  // Store in data
+  const q = PENDING.find(q => q._pendingId === pid)
+  if (q) q.answer = val
+}
+
+function refreshAnswerOpts(pid) {
+  const q = PENDING.find(q => q._pendingId === pid)
+  if (!q) return
+  const opts = [0,1,2,3].map(i => (document.getElementById(`opt_${pid}_${i}`)?.value||'').trim())
+  q.options = opts
+  const letters = ['A','B','C','D']
+  const curAns  = q.answer
+  document.getElementById(`ansRow_${pid}`).innerHTML = opts.map((o,i) => {
+    if (!o) return ''
+    return `<span class="answer-opt ${o===curAns?'sel':''}" onclick="selectAnswer('${pid}',${i})" id="ao_${pid}_${i}">${letters[i]}: ${o.slice(0,40)}</span>`
+  }).join('')
+}
+
+function approveCard(pid) {
+  const card = document.getElementById(`qcard_${pid}`)
+  card.classList.add('approved')
+  document.getElementById(`status_${pid}`).innerHTML = `<span style="color:#34d399">✓ Approved — will be saved when you click "Save All Approved"</span>`
+  card.dataset.approved = '1'
+}
+
+async function rejectCard(pid) {
+  const card = document.getElementById(`qcard_${pid}`)
+  await fetch(`${API}/admin/questions/pending/${pid}`, { method:'DELETE', headers: ah() })
+  card.classList.add('rejected')
+  card.dataset.rejected = '1'
+  PENDING = PENDING.filter(q => q._pendingId !== pid)
+  document.getElementById(`status_${pid}`).innerHTML = `<span style="color:#f87171">✗ Rejected and removed</span>`
+  setTimeout(() => card.remove(), 800)
+}
+
+async function saveAllApproved() {
+  const approvedCards = document.querySelectorAll('.q-review-card[data-approved="1"]')
+  if (!approvedCards.length) return toast('No approved questions — click ✓ Approve on cards first', 'err')
+
+  const toSave = []
+  const removePendingIds = []
+  for (const card of approvedCards) {
+    const pid  = card.id.replace('qcard_', '')
+    const orig = PENDING.find(q => q._pendingId === pid) || {}
+    const q = {
+      subject:     document.getElementById(`subj_${pid}`)?.value  || orig.subject,
+      class:       document.getElementById(`cls_${pid}`)?.value   || orig.class,
+      topic:       document.getElementById(`topic_${pid}`)?.value || orig.topic || 'general',
+      difficulty:  Number(document.getElementById(`diff_${pid}`)?.value || orig.difficulty || 2),
+      question:    document.getElementById(`qt_${pid}`)?.value    || orig.question,
+      options:     [0,1,2,3].map(i => (document.getElementById(`opt_${pid}_${i}`)?.value||'').trim()),
+      answer:      orig.answer || '',
+      explanation: document.getElementById(`exp_${pid}`)?.value   || ''
+    }
+    const selAns = document.querySelector(`#ansRow_${pid} .answer-opt.sel`)
+    if (selAns) q.answer = selAns.textContent.replace(/^[A-D]: /,'').trim()
+    if (!q.question?.trim()) { toast(`Question card ${pid}: question text is empty`, 'err'); return }
+    if (!q.answer?.trim())   { toast(`Question card ${pid}: no correct answer selected`, 'err'); return }
+    toSave.push(q)
+    removePendingIds.push(pid)
+  }
+
+  const r = await fetch(`${API}/admin/questions/save`, {
+    method:'POST', headers: ah(),
+    body: JSON.stringify({ questions: toSave, removePendingIds })
+  })
+  const d = await r.json()
+  if (!r.ok) return toast(d.error, 'err')
+  toast(d.message, 'ok')
+  loadPending()
+}
+
+// ─── TOAST ──────────────────────────────────────────────
+let _toastTimer = null
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast')
+  el.textContent = msg
+  el.className = `toast show ${type}`
+  clearTimeout(_toastTimer)
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3500)
+}
+
+// ─── BOOT ───────────────────────────────────────────────
+if (TOKEN && ADMIN?.role === 'admin') {
+  document.getElementById('loginWrap').classList.add('hidden')
+  document.getElementById('adminNameBadge').textContent = ADMIN.name
+  loadOverview()
+} else {
+  TOKEN = null; ADMIN = null
+}
+</script>
+<div id="reportModal"></div>
+</body>
+</html>

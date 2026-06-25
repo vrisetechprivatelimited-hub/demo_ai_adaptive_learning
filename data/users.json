@@ -1,0 +1,42 @@
+[
+  {
+    "id": "u_1782363783592_nb93v",
+    "name": "Radhey",
+    "email": "rp@gmail.com",
+    "passwordHash": "$2b$10$hmoa2l8YSVffD25fISQ.Yu1n7CnmyIjPCyUWwYr61swkFxln.ZBk.",
+    "role": "student",
+    "createdAt": "2026-06-25T05:03:03.708Z"
+  },
+  {
+    "id": "u_1782365366177_rkqxp",
+    "name": "Your Name",
+    "email": "admin@vrisetech.com",
+    "mobile": "9876543210",
+    "passwordHash": "$2b$10$I8ylTzn0kEyJ/X2lTjhZM.yr0uOM//zHvvcbHSw3H9nOuIkJGpteK",
+    "role": "admin",
+    "subscription": {
+      "plan": "premium",
+      "startDate": "2026-06-25T05:29:26.176Z",
+      "expiryDate": "2026-07-25T05:29:26.284Z",
+      "status": "active"
+    },
+    "sessionCount": 0,
+    "createdAt": "2026-06-25T05:29:26.176Z"
+  },
+  {
+    "id": "u_1782369690996_0oi1y",
+    "name": "aastha singh",
+    "email": "aasthasingh9352@gmail.com",
+    "mobile": "9867512345",
+    "passwordHash": "$2b$10$wuHHuLnWa/x24RKyc3SC8eyICUiTBHofSzonIumQDlsCEhj5g8zl6",
+    "role": "student",
+    "subscription": {
+      "plan": "free",
+      "startDate": "2026-06-25T06:41:46.237Z",
+      "expiryDate": null,
+      "status": "active"
+    },
+    "sessionCount": 3,
+    "createdAt": "2026-06-25T06:41:30.996Z"
+  }
+]

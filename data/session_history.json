@@ -1,0 +1,30 @@
+{
+  "u_1782369690996_0oi1y": [
+    {
+      "sessionId": "sess_1782381725766",
+      "completedAt": "2026-06-25T10:04:21.030Z",
+      "cls": "10",
+      "subject": "maths",
+      "mode": "dpp",
+      "topics": [
+        "circles_10"
+      ],
+      "totalAnswered": 10,
+      "totalCorrect": 6,
+      "overallAccuracy": 60,
+      "durationSec": 135,
+      "topicBreakdown": {
+        "circles_10": {
+          "totalAnswered": 10,
+          "totalCorrect": 6,
+          "accuracy": 60,
+          "currentLevel": 1,
+          "minLevel": 1,
+          "maxLevel": 3,
+          "masteredEarly": false,
+          "status": "average"
+        }
+      }
+    }
+  ]
+}
